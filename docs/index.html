@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Byte-Sized Business Boost (Static)</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-store"></i>
+        <span>Business Boost</span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn ghost" id="favoritesBtn"><i class="fas fa-heart"></i> Favorites</button>
+        <button class="btn primary" id="addBtn"><i class="fas fa-plus-circle"></i> Add Business</button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container hero-content">
+      <div>
+        <p class="eyebrow">Support Local</p>
+        <h1>Discover small businesses near you.</h1>
+        <p class="sub">Browse by category, see ratings, save favorites, and find deals — all in one place.</p>
+        <div class="hero-actions">
+          <button class="btn primary" id="topRatedBtn"><i class="fas fa-star"></i> Top Rated</button>
+          <button class="btn secondary" id="mostReviewedBtn"><i class="fas fa-comments"></i> Most Reviewed</button>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="stat">
+          <div class="stat-label">Businesses</div>
+          <div class="stat-value" id="statBusinesses">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Reviews</div>
+          <div class="stat-value" id="statReviews">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Avg Rating</div>
+          <div class="stat-value" id="statRating">0.0</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="filters-card">
+      <div class="filters">
+        <div class="filter">
+          <label for="search"><i class="fas fa-search"></i> Search</label>
+          <input id="search" type="text" placeholder="Search by name, category, or address" />
+        </div>
+        <div class="filter">
+          <label for="category"><i class="fas fa-tags"></i> Category</label>
+          <select id="category"></select>
+        </div>
+        <div class="filter">
+          <label for="sort"><i class="fas fa-sort"></i> Sort</label>
+          <select id="sort">
+            <option value="name">Name</option>
+            <option value="rating">Highest Rated</option>
+            <option value="reviews">Most Reviewed</option>
+          </select>
+        </div>
+        <button class="btn primary" id="applyFilters"><i class="fas fa-filter"></i> Apply</button>
+      </div>
+      <div class="category-pills" id="categoryPills"></div>
+    </section>
+
+    <section id="businessList" class="grid"></section>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="modal-content" id="modalContent">
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+  </div>
+
+  <template id="businessCardTemplate">
+    <article class="card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title"></h3>
+          <div class="badge category-badge"></div>
+        </div>
+        <button class="icon-btn favorite-btn" title="Add to favorites"><i class="far fa-heart"></i></button>
+      </div>
+      <p class="muted address"></p>
+      <p class="muted phone"></p>
+      <p class="description"></p>
+      <div class="rating-row"></div>
+      <div class="deal-row"></div>
+      <div class="card-actions">
+        <button class="btn ghost details-btn"><i class="fas fa-eye"></i> Details</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="dealTemplate">
+    <div class="deal-pill"><i class="fas fa-tag"></i> <span class="deal-text"></span></div>
+  </template>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
+
