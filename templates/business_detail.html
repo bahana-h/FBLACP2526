@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}{{ business.name }} - Business Boost{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="business-detail">
+        <div class="business-detail-header">
+            <div>
+                <h1>{{ business.name }}</h1>
+                <span class="category-badge category-{{ business.category }}">{{ business.category.title() }}</span>
+            </div>
+            {% if username %}
+                <form method="POST" action="{{ url_for('toggle_favorite') }}" class="favorite-form">
+                    <input type="hidden" name="business_id" value="{{ business.id }}">
+                    <input type="hidden" name="action" value="{{ 'remove' if is_favorite else 'add' }}">
+                    <button type="submit" class="btn-favorite {% if is_favorite %}favorited{% endif %}">
+                        <i class="fas fa-heart"></i> {{ 'Remove from' if is_favorite else 'Add to' }} Favorites
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+        <div class="business-detail-content">
+            <div class="business-info-section">
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Information</h3>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Address</strong>
+                            <p>{{ business.address }}</p>
+                        </div>
+                    </div>
+                    {% if business.phone %}
+                        <div class="info-item">
+                            <i class="fas fa-phone"></i>
+                            <div>
+                                <strong>Phone</strong>
+                                <p><a href="tel:{{ business.phone }}">{{ business.phone }}</a></p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% if business.description %}
+                        <div class="info-item">
+                            <i class="fas fa-align-left"></i>
+                            <div>
+                                <strong>Description</strong>
+                                <p>{{ business.description }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="rating-card">
+                    <h3><i class="fas fa-star"></i> Rating & Reviews</h3>
+                    {% set avg_rating = business.get_average_rating() %}
+                    {% set review_count = business.get_review_count() %}
+                    {% if review_count > 0 %}
+                        <div class="rating-display">
+                            <div class="rating-number">{{ "%.1f"|format(avg_rating) }}</div>
+                            <div class="stars-large">
+                                {% for i in range(5) %}
+                                    <i class="fas fa-star {% if i < avg_rating|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <div class="rating-count">{{ review_count }} review{{ 's' if review_count != 1 else '' }}</div>
+                        </div>
+                    {% else %}
+                        <div class="no-reviews-large">
+                            <i class="fas fa-star"></i>
+                            <p>No reviews yet. Be the first to review!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if business.deals %}
+                <div class="deals-section">
+                    <h2><i class="fas fa-tag"></i> Special Deals & Coupons</h2>
+                    <div class="deals-grid">
+                        {% for deal in business.deals %}
+                            <div class="deal-card">
+                                <div class="deal-header">
+                                    <i class="fas fa-ticket-alt"></i>
+                                    <h3>{{ deal.title }}</h3>
+                                </div>
+                                <p class="deal-description">{{ deal.description }}</p>
+                                {% if deal.expires %}
+                                    <p class="deal-expires"><i class="fas fa-calendar"></i> Expires: {{ deal.expires }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="reviews-section">
+                <h2><i class="fas fa-comments"></i> Reviews</h2>
+                
+                {% if business.reviews %}
+                    <div class="reviews-list">
+                        {% for review in business.reviews|reverse %}
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="review-author">
+                                        <i class="fas fa-user-circle"></i>
+                                        <strong>{{ review.user_name }}</strong>
+                                    </div>
+                                    <div class="review-rating">
+                                        {% for i in range(5) %}
+                                            <i class="fas fa-star {% if i < review.rating %}star-filled{% else %}star-empty{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p class="review-comment">{{ review.comment }}</p>
+                                <p class="review-date"><i class="fas fa-clock"></i> {{ review.date[:10] }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-reviews">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>No reviews yet. Be the first to share your experience!</p>
+                    </div>
+                {% endif %}
+
+                <div class="add-review-section">
+                    <h3>Leave a Review</h3>
+                    {% if username %}
+                        <form method="POST" action="{{ url_for('add_review') }}" class="review-form" id="reviewForm">
+                            <input type="hidden" name="business_id" value="{{ business.id }}">
+                            <input type="hidden" name="user_name" value="{{ username }}">
+                            
+                            <div class="form-group">
+                                <label>Rating</label>
+                                <div class="rating-input">
+                                    {% for i in range(5, 0, -1) %}
+                                        <input type="radio" name="rating" id="rating{{ i }}" value="{{ i }}" required>
+                                        <label for="rating{{ i }}" class="star-label">
+                                            <i class="fas fa-star"></i>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="comment">Your Review</label>
+                                <textarea id="comment" name="comment" rows="4" placeholder="Share your experience..." required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="verification_answer">Verification: <span id="verification-question"></span></label>
+                                <input type="text" id="verification_answer" name="verification_answer" placeholder="Your answer" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Review</button>
+                        </form>
+                    {% else %}
+                        <p class="info-message">Please <a href="{{ url_for('index') }}">enter your name</a> to leave a review.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load verification question when page loads
+    fetch('{{ url_for("get_verification") }}')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('verification-question').textContent = data.question + ' = ?';
+        });
+
+    // Star rating interaction
+    document.querySelectorAll('.rating-input input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const rating = parseInt(this.value);
+            const labels = document.querySelectorAll('.rating-input .star-label');
+            labels.forEach((label, index) => {
+                if (index < 5 - rating) {
+                    label.classList.remove('selected');
+                } else {
+                    label.classList.add('selected');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+

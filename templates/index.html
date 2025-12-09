@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Business Boost{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-store"></i> Discover Local Businesses</h1>
+        <p>Find and support small businesses in your community</p>
+    </div>
+
+    <div class="filters-section">
+        <form method="GET" action="{{ url_for('index') }}" class="filters-form">
+            <div class="filter-group">
+                <label for="search"><i class="fas fa-search"></i> Search</label>
+                <input type="text" id="search" name="search" placeholder="Search by name, category, or address..." value="{{ search_query }}">
+            </div>
+            
+            <div class="filter-group">
+                <label for="category"><i class="fas fa-tags"></i> Category</label>
+                <select id="category" name="category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>{{ cat.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="sort"><i class="fas fa-sort"></i> Sort By</label>
+                <select id="sort" name="sort">
+                    <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+                    <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                    <option value="reviews" {% if current_sort == 'reviews' %}selected{% endif %}>Most Reviewed</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Apply Filters</button>
+        </form>
+    </div>
+
+    <div class="business-grid">
+        {% if businesses %}
+            {% for business in businesses %}
+                <div class="business-card">
+                    <div class="business-card-header">
+                        <h3><a href="{{ url_for('business_detail', business_id=business.id) }}">{{ business.name }}</a></h3>
+                        <span class="category-badge category-{{ business.category }}">{{ business.category.title() }}</span>
+                    </div>
+                    
+                    <div class="business-card-body">
+                        <p class="business-address"><i class="fas fa-map-marker-alt"></i> {{ business.address }}</p>
+                        {% if business.phone %}
+                            <p class="business-phone"><i class="fas fa-phone"></i> {{ business.phone }}</p>
+                        {% endif %}
+                        {% if business.description %}
+                            <p class="business-description">{{ business.description[:100] }}{% if business.description|length > 100 %}...{% endif %}</p>
+                        {% endif %}
+                        
+                        <div class="business-rating">
+                            {% set avg_rating = business.get_average_rating() %}
+                            {% set review_count = business.get_review_count() %}
+                            {% if review_count > 0 %}
+                                <div class="stars">
+                                    {% for i in range(5) %}
+                                        <i class="fas fa-star {% if i < avg_rating|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="rating-text">{{ "%.1f"|format(avg_rating) }}/5.0 ({{ review_count }} review{{ 's' if review_count != 1 else '' }})</span>
+                            {% else %}
+                                <span class="no-reviews">No reviews yet</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if business.deals %}
+                            <div class="deals-badge">
+                                <i class="fas fa-tag"></i> {{ business.deals|length }} deal{{ 's' if business.deals|length != 1 else '' }} available
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="business-card-footer">
+                        <a href="{{ url_for('business_detail', business_id=business.id) }}" class="btn btn-outline">View Details</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h2>No businesses found</h2>
+                <p>Try adjusting your search or filters, or <a href="{{ url_for('add_business') }}">add a new business</a>.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}My Favorites - Business Boost{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-heart"></i> My Favorite Businesses</h1>
+        <p>Your saved local businesses</p>
+    </div>
+
+    {% if businesses %}
+        <div class="business-grid">
+            {% for business in businesses %}
+                <div class="business-card">
+                    <div class="business-card-header">
+                        <h3><a href="{{ url_for('business_detail', business_id=business.id) }}">{{ business.name }}</a></h3>
+                        <span class="category-badge category-{{ business.category }}">{{ business.category.title() }}</span>
+                    </div>
+                    
+                    <div class="business-card-body">
+                        <p class="business-address"><i class="fas fa-map-marker-alt"></i> {{ business.address }}</p>
+                        {% if business.phone %}
+                            <p class="business-phone"><i class="fas fa-phone"></i> {{ business.phone }}</p>
+                        {% endif %}
+                        
+                        <div class="business-rating">
+                            {% set avg_rating = business.get_average_rating() %}
+                            {% set review_count = business.get_review_count() %}
+                            {% if review_count > 0 %}
+                                <div class="stars">
+                                    {% for i in range(5) %}
+                                        <i class="fas fa-star {% if i < avg_rating|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="rating-text">{{ "%.1f"|format(avg_rating) }}/5.0 ({{ review_count }} review{{ 's' if review_count != 1 else '' }})</span>
+                            {% else %}
+                                <span class="no-reviews">No reviews yet</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="business-card-footer">
+                        <a href="{{ url_for('business_detail', business_id=business.id) }}" class="btn btn-outline">View Details</a>
+                        <form method="POST" action="{{ url_for('toggle_favorite') }}" style="display: inline;">
+                            <input type="hidden" name="business_id" value="{{ business.id }}">
+                            <input type="hidden" name="action" value="remove">
+                            <button type="submit" class="btn btn-danger"><i class="fas fa-heart-broken"></i> Remove</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-heart"></i>
+            <h2>No favorites yet</h2>
+            <p>Start exploring businesses and add them to your favorites!</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Browse Businesses</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
