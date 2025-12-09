@@ -1,13 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Business Boost{% endblock %}
+{% block title %}{% if page_title %}{{ page_title }} - {% else %}Home - {% endif %}Business Boost{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="page-header">
-        <h1><i class="fas fa-store"></i> Discover Local Businesses</h1>
-        <p>Find and support small businesses in your community</p>
+        <h1><i class="fas fa-store"></i> {% if page_title %}{{ page_title }}{% else %}Discover Local Businesses{% endif %}</h1>
+        <p>{% if page_title %}Browse {% else %}Find and support {% endif %}small businesses in your community</p>
     </div>
+
+    {% if not page_title %}
+    <div class="quick-actions">
+        <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('top_rated') }}" class="action-btn action-primary">
+                <i class="fas fa-star"></i>
+                <span>Top Rated</span>
+            </a>
+            <a href="{{ url_for('most_reviewed') }}" class="action-btn action-secondary">
+                <i class="fas fa-comments"></i>
+                <span>Most Reviewed</span>
+            </a>
+            <a href="{{ url_for('add_business') }}" class="action-btn action-success">
+                <i class="fas fa-plus-circle"></i>
+                <span>Add Business</span>
+            </a>
+        </div>
+    </div>
+
+    {% if categories %}
+    <div class="category-filters">
+        <h2><i class="fas fa-tags"></i> Browse by Category</h2>
+        <div class="category-buttons">
+            {% for cat in categories %}
+                <a href="{{ url_for('category_view', category_name=cat) }}" class="category-btn category-{{ cat }}">
+                    <i class="fas fa-{% if cat == 'food' %}utensils{% elif cat == 'retail' %}shopping-bag{% else %}tools{% endif %}"></i>
+                    {{ cat.title() }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
 
     <div class="filters-section">
         <form method="GET" action="{{ url_for('index') }}" class="filters-form">

@@ -63,7 +63,8 @@ def index():
                          current_category=category,
                          current_sort=sort_by,
                          search_query=search,
-                         username=username)
+                         username=username,
+                         page_title=None)
 
 
 @app.route('/business/<business_id>')
@@ -241,6 +242,59 @@ def get_verification():
         'question': f"{num1} + {num2}",
         'answer': session['review_verification_answer']
     })
+
+
+@app.route('/top-rated')
+def top_rated():
+    """Show top rated businesses."""
+    businesses = business_boost.sort_businesses_by_rating()
+    # Filter out businesses with no reviews
+    businesses = [b for b in businesses if b.get_review_count() > 0]
+    categories = business_boost.get_all_categories()
+    username = session.get('username', '')
+    
+    return render_template('index.html', 
+                         businesses=businesses, 
+                         categories=categories,
+                         current_category='',
+                         current_sort='rating',
+                         search_query='',
+                         username=username,
+                         page_title='Top Rated Businesses')
+
+
+@app.route('/most-reviewed')
+def most_reviewed():
+    """Show most reviewed businesses."""
+    businesses = business_boost.sort_businesses_by_review_count()
+    categories = business_boost.get_all_categories()
+    username = session.get('username', '')
+    
+    return render_template('index.html', 
+                         businesses=businesses, 
+                         categories=categories,
+                         current_category='',
+                         current_sort='reviews',
+                         search_query='',
+                         username=username,
+                         page_title='Most Reviewed Businesses')
+
+
+@app.route('/category/<category_name>')
+def category_view(category_name):
+    """Show businesses in a specific category."""
+    businesses = business_boost.get_businesses_by_category(category_name)
+    categories = business_boost.get_all_categories()
+    username = session.get('username', '')
+    
+    return render_template('index.html', 
+                         businesses=businesses, 
+                         categories=categories,
+                         current_category=category_name,
+                         current_sort='name',
+                         search_query='',
+                         username=username,
+                         page_title=f'{category_name.title()} Businesses')
 
 
 if __name__ == '__main__':

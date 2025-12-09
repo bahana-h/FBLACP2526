@@ -16,7 +16,14 @@
             </div>
             <div class="nav-links">
                 <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
-                <a href="{{ url_for('favorites') }}"><i class="fas fa-heart"></i> Favorites</a>
+                <div class="nav-dropdown">
+                    <a href="#" class="nav-dropdown-toggle"><i class="fas fa-filter"></i> Browse <i class="fas fa-chevron-down"></i></a>
+                    <div class="nav-dropdown-menu">
+                        <a href="{{ url_for('top_rated') }}"><i class="fas fa-star"></i> Top Rated</a>
+                        <a href="{{ url_for('most_reviewed') }}"><i class="fas fa-comments"></i> Most Reviewed</a>
+                        <a href="{{ url_for('favorites') }}"><i class="fas fa-heart"></i> My Favorites</a>
+                    </div>
+                </div>
                 <a href="{{ url_for('add_business') }}"><i class="fas fa-plus-circle"></i> Add Business</a>
                 {% if username %}
                     <span class="username"><i class="fas fa-user"></i> {{ username }}</span>
