@@ -22,43 +22,64 @@ A modern web application built with Flask that helps users discover and support 
 
 ✅ **Real-time Updates**: All changes are saved instantly
 
-## Requirements
+## Quick Start (No Installation Required!)
 
-- Python 3.6 or higher
-- Flask 3.0.0+ (see requirements.txt)
+**Just run one command and the website will start automatically!**
 
-## Installation
+### Option 1: Use the Auto-Start Script (Recommended)
 
-1. Clone or download this repository:
+**On macOS/Linux:**
+```bash
+./start.sh
+```
+
+**On Windows:**
+```bash
+start.bat
+```
+
+**Or use Python directly (works on all platforms):**
+```bash
+python3 start.py
+```
+
+The script will automatically:
+- ✅ Check if Python is installed
+- ✅ Install Flask and dependencies if needed
+- ✅ Start the web server
+- ✅ Open your browser to `http://localhost:5000`
+
+### Option 2: Manual Setup
+
+If you prefer manual setup:
+
+1. **Clone or download this repository:**
 ```bash
 git clone <repository-url>
 cd FBLACP2526
 ```
 
-2. Create a virtual environment (recommended):
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
+2. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
 ```
 
-## Running the Web Application
-
-1. Start the Flask development server:
+3. **Start the server:**
 ```bash
 python3 app.py
 ```
 
-2. Open your web browser and navigate to:
+4. **Open your browser:**
 ```
 http://localhost:5000
 ```
 
-The application will automatically create sample data on first run if no data file exists.
+## Requirements
+
+- Python 3.6 or higher (usually pre-installed on macOS/Linux)
+- Internet connection (for auto-installing Flask on first run)
+
+**Note:** The startup scripts will automatically install Flask if it's not already installed. No manual installation needed!
 
 ## Usage Guide
 
@@ -136,11 +157,14 @@ The application comes pre-loaded with sample businesses across different categor
 
 ```
 FBLACP2526/
-├── app.py                  # Flask web application
-├── models.py               # Business and BusinessBoost classes
+├── start.py               # 🚀 Auto-start script (run this!)
+├── start.sh               # Auto-start script for macOS/Linux
+├── start.bat              # Auto-start script for Windows
+├── app.py                 # Flask web application
+├── models.py              # Business and BusinessBoost classes
 ├── business_boost.py      # Original CLI version (still available)
-├── requirements.txt        # Python dependencies
-├── business_data.json      # Data storage (created on first run)
+├── requirements.txt       # Python dependencies
+├── business_data.json     # Data storage (created on first run)
 ├── templates/              # HTML templates
 │   ├── base.html          # Base template with navigation
 │   ├── index.html         # Home page with business listings
