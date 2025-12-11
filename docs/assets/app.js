@@ -1,5 +1,7 @@
-// Static client-side app for Byte-Sized Business Boost
+// Byte-Sized Business Boost - Real Local Business Finder
+// Uses Google Places API (works directly in browser - no backend needed!)
 
+// Sample businesses as fallback
 const sampleBusinesses = [
   {
     id: "joescoffee",
@@ -13,53 +15,18 @@ const sampleBusinesses = [
       { user_name: "Ava", rating: 5, comment: "Best latte in town!", date: "2024-01-12" },
       { user_name: "Liam", rating: 4, comment: "Great vibe and friendly staff.", date: "2024-02-03" }
     ]
-  },
-  {
-    id: "greenthumb",
-    name: "Green Thumb Garden Center",
-    category: "retail",
-    address: "456 Oak Ave, Garden District",
-    phone: "555-0102",
-    description: "Family-owned garden center with expert advice and quality plants.",
-    deals: [{ title: "20% Off All Seeds", description: "Valid this month", expires: "2024-12-31" }],
-    reviews: [{ user_name: "Noah", rating: 5, comment: "Healthy plants and helpful staff!", date: "2024-03-08" }]
-  },
-  {
-    id: "quickfix",
-    name: "Quick Fix Auto Repair",
-    category: "services",
-    address: "789 Industrial Blvd",
-    phone: "555-0103",
-    description: "Honest and reliable auto repair service with fair pricing.",
-    deals: [{ title: "Free Oil Change", description: "With any major service", expires: "2024-12-31" }],
-    reviews: []
-  },
-  {
-    id: "mamaskitchen",
-    name: "Mama's Italian Kitchen",
-    category: "food",
-    address: "321 Elm St, Little Italy",
-    phone: "555-0104",
-    description: "Authentic Italian cuisine made with love and fresh ingredients.",
-    deals: [{ title: "10% Off Dinner", description: "Monday-Thursday", expires: "2024-12-31" }],
-    reviews: [{ user_name: "Sophia", rating: 5, comment: "Incredible pasta and warm hospitality!", date: "2024-04-21" }]
-  },
-  {
-    id: "booknook",
-    name: "The Book Nook",
-    category: "retail",
-    address: "654 Pine St, Arts Quarter",
-    phone: "555-0105",
-    description: "Independent bookstore with a curated selection of new and used books.",
-    deals: [{ title: "Buy 2 Get 1 Free", description: "All paperback books", expires: "2024-12-31" }],
-    reviews: []
   }
 ];
 
 const state = {
   businesses: [],
   favorites: new Set(),
-  filters: { search: "", category: "", sort: "name" }
+  filters: { search: "", category: "", sort: "name" },
+  currentLocation: null,
+  apiKey: null,
+  loading: false,
+  placesService: null,
+  map: null
 };
 
 const els = {};
@@ -68,19 +35,250 @@ function qs(id) {
   return document.getElementById(id);
 }
 
+// API Key Management
+function loadApiKey() {
+  const stored = localStorage.getItem("bsbb-google-api-key");
+  if (stored) {
+    state.apiKey = stored;
+    qs("apiKeyBanner").style.display = "none";
+    initializeGooglePlaces();
+    return true;
+  }
+  qs("apiKeyBanner").style.display = "block";
+  return false;
+}
+
+function saveApiKey(key) {
+  state.apiKey = key;
+  localStorage.setItem("bsbb-google-api-key", key);
+  qs("apiKeyBanner").style.display = "none";
+  qs("apiKeyModal").style.display = "none";
+  
+  // Update the Google Maps script with new API key
+  const script = document.querySelector('script[src*="maps.googleapis.com"]');
+  if (script) {
+    script.src = script.src.replace(/key=[^&]+/, `key=${key}`);
+  } else {
+    // Add script if it doesn't exist
+    const newScript = document.createElement('script');
+    newScript.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initializeGooglePlaces`;
+    newScript.async = true;
+    newScript.defer = true;
+    document.head.appendChild(newScript);
+  }
+  
+  initializeGooglePlaces();
+  if (state.currentLocation) {
+    searchBusinesses(state.currentLocation);
+  }
+}
+
+function initializeGooglePlaces() {
+  if (!state.apiKey || typeof google === 'undefined' || !google.maps) {
+    return;
+  }
+  
+  // Initialize a hidden map (required for PlacesService)
+  if (!state.map) {
+    state.map = new google.maps.Map(document.createElement('div'));
+  }
+  
+  if (!state.placesService) {
+    state.placesService = new google.maps.places.PlacesService(state.map);
+  }
+}
+
+// Make initializeGooglePlaces available globally for callback
+window.initializeGooglePlaces = initializeGooglePlaces;
+
+function showApiKeyModal() {
+  qs("apiKeyModal").style.display = "flex";
+  qs("apiKeyInput").value = state.apiKey || "";
+}
+
+function hideApiKeyModal() {
+  qs("apiKeyModal").style.display = "none";
+}
+
+// Geolocation
+function getCurrentLocation() {
+  if (!navigator.geolocation) {
+    showStatus("Geolocation is not supported by your browser.", "error");
+    return;
+  }
+
+  showStatus("Getting your location...", "info");
+  state.loading = true;
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const location = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      };
+      state.currentLocation = location;
+      showStatus(`Location found! Searching nearby businesses...`, "success");
+      searchBusinesses(location);
+    },
+    (error) => {
+      showStatus("Could not get your location. Please enter a location manually.", "error");
+      state.loading = false;
+    }
+  );
+}
+
+function searchByLocationText() {
+  const locationText = qs("locationInput").value.trim();
+  if (!locationText) {
+    showStatus("Please enter a location.", "error");
+    return;
+  }
+
+  state.currentLocation = locationText;
+  showStatus(`Searching businesses in ${locationText}...`, "info");
+  searchBusinesses(locationText);
+}
+
+// Google Places API Integration
+function searchBusinesses(location) {
+  if (!state.apiKey) {
+    showStatus("Please enter your Google Places API key to search for businesses.", "error");
+    showApiKeyModal();
+    return;
+  }
+
+  if (!state.placesService) {
+    showStatus("Initializing Google Places...", "info");
+    initializeGooglePlaces();
+    if (!state.placesService) {
+      showStatus("Google Places API not loaded. Please check your API key.", "error");
+      return;
+    }
+  }
+
+  state.loading = true;
+  showStatus("Searching for local businesses...", "info");
+
+  // Build search request
+  const request = {
+    query: getSearchQuery(),
+    fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating', 'user_ratings_total', 'types', 'place_id', 'geometry'],
+    locationBias: typeof location === 'string' ? undefined : new google.maps.LatLng(location.latitude, location.longitude)
+  };
+
+  // If location is a string, use it as query
+  if (typeof location === 'string') {
+    request.query = `${getSearchQuery()} in ${location}`;
+  }
+
+  state.placesService.textSearch(request, (results, status) => {
+    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+      // Transform Google Places data to our format
+      state.businesses = results.map(place => ({
+        id: place.place_id,
+        name: place.name,
+        category: mapGoogleCategory(place.types),
+        address: place.formatted_address || 'Address not available',
+        phone: place.formatted_phone_number || 'No phone listed',
+        description: place.types ? place.types.slice(0, 3).join(', ') : '',
+        rating: place.rating || 0,
+        review_count: place.user_ratings_total || 0,
+        latitude: place.geometry?.location?.lat(),
+        longitude: place.geometry?.location?.lng(),
+        deals: [], // Users can add deals
+        reviews: [] // We'll use Google's review count, but store our own reviews
+      }));
+
+      showStatus(`Found ${state.businesses.length} businesses!`, "success");
+      buildCategories();
+      render();
+      state.loading = false;
+    } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+      showStatus("No businesses found. Try a different location.", "error");
+      state.businesses = sampleBusinesses;
+      buildCategories();
+      render();
+      state.loading = false;
+    } else {
+      console.error("Places API error:", status);
+      showStatus(`Error: ${status}. Using sample data.`, "error");
+      state.businesses = sampleBusinesses;
+      buildCategories();
+      render();
+      state.loading = false;
+    }
+  });
+}
+
+function getSearchQuery() {
+  // Build search query based on category filter
+  const categoryMap = {
+    'food': 'restaurant cafe food',
+    'retail': 'store shop retail',
+    'services': 'service business'
+  };
+  
+  if (state.filters.category && categoryMap[state.filters.category]) {
+    return categoryMap[state.filters.category];
+  }
+  
+  return 'local business small business';
+}
+
+function mapGoogleCategory(types) {
+  if (!types || types.length === 0) return 'services';
+  
+  const typeStr = types.join(' ').toLowerCase();
+  
+  if (typeStr.includes('restaurant') || typeStr.includes('food') || 
+      typeStr.includes('cafe') || typeStr.includes('meal') ||
+      typeStr.includes('bakery') || typeStr.includes('bar')) {
+    return 'food';
+  }
+  if (typeStr.includes('store') || typeStr.includes('shop') ||
+      typeStr.includes('retail') || typeStr.includes('market') ||
+      typeStr.includes('shopping')) {
+    return 'retail';
+  }
+  return 'services';
+}
+
+function showStatus(message, type = 'info') {
+  const statusEl = qs("locationStatus");
+  statusEl.textContent = message;
+  statusEl.className = `location-status status-${type}`;
+  
+  if (type === 'success') {
+    setTimeout(() => {
+      statusEl.textContent = '';
+      statusEl.className = 'location-status';
+    }, 3000);
+  }
+}
+
 function loadState() {
   const stored = localStorage.getItem("bsbb-data");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      state.businesses = parsed.businesses || sampleBusinesses;
+      state.businesses = parsed.businesses || [];
       state.favorites = new Set(parsed.favorites || []);
-      return;
     } catch (e) {
-      console.warn("Failed to parse stored data, using samples", e);
+      console.warn("Failed to parse stored data", e);
     }
   }
-  state.businesses = sampleBusinesses;
+  
+  // If no businesses loaded and we have location, search
+  if (state.businesses.length === 0 && state.currentLocation) {
+    // Wait a bit for Google Maps to load
+    setTimeout(() => {
+      if (state.placesService) {
+        searchBusinesses(state.currentLocation);
+      }
+    }, 1000);
+  } else if (state.businesses.length === 0) {
+    state.businesses = sampleBusinesses;
+  }
 }
 
 function saveState() {
@@ -91,21 +289,28 @@ function saveState() {
 }
 
 function averageRating(biz) {
-  if (!biz.reviews.length) return 0;
+  // Use Google rating if available, otherwise calculate from reviews
+  if (biz.rating !== undefined) {
+    return biz.rating;
+  }
+  if (!biz.reviews || !biz.reviews.length) return 0;
   return biz.reviews.reduce((a, r) => a + (r.rating || 0), 0) / biz.reviews.length;
 }
 
 function totalReviews(biz) {
-  return biz.reviews.length;
+  // Use Google review count if available
+  if (biz.review_count !== undefined) {
+    return biz.review_count + (biz.reviews?.length || 0);
+  }
+  return biz.reviews?.length || 0;
 }
 
 function renderStats() {
   qs("statBusinesses").textContent = state.businesses.length;
-  const allReviews = state.businesses.reduce((a, b) => a + b.reviews.length, 0);
+  const allReviews = state.businesses.reduce((a, b) => a + totalReviews(b), 0);
   qs("statReviews").textContent = allReviews;
-  const rated = state.businesses.filter(b => b.reviews.length);
-  const avg =
-    rated.length === 0 ? 0 : rated.reduce((a, b) => a + averageRating(b), 0) / rated.length;
+  const rated = state.businesses.filter(b => totalReviews(b) > 0);
+  const avg = rated.length === 0 ? 0 : rated.reduce((a, b) => a + averageRating(b), 0) / rated.length;
   qs("statRating").textContent = avg.toFixed(1);
 }
 
@@ -129,6 +334,10 @@ function buildCategories() {
       state.filters.category = state.filters.category === cat ? "" : cat;
       updateFiltersUI();
       render();
+      // Re-search if we have a location
+      if (state.currentLocation) {
+        searchBusinesses(state.currentLocation);
+      }
     });
     pills.appendChild(pill);
   });
@@ -175,9 +384,15 @@ function render() {
   updateFiltersUI();
   const list = qs("businessList");
   list.innerHTML = "";
+  
+  if (state.loading) {
+    list.innerHTML = `<div class="empty"><i class="fas fa-spinner fa-spin"></i> Loading businesses...</div>`;
+    return;
+  }
+  
   const data = filteredBusinesses();
   if (!data.length) {
-    list.innerHTML = `<div class="empty">No businesses found. Try another search.</div>`;
+    list.innerHTML = `<div class="empty">No businesses found. ${state.apiKey ? 'Try another search or location.' : 'Enter your Google Places API key to search for real businesses.'}</div>`;
     return;
   }
   data.forEach(biz => list.appendChild(cardForBusiness(biz)));
@@ -252,6 +467,7 @@ function openDetails(id) {
     <div class="detail-meta">
       <div><i class="fas fa-map-marker-alt"></i> ${biz.address}</div>
       <div><i class="fas fa-phone"></i> ${biz.phone || "No phone listed"}</div>
+      ${biz.latitude && biz.longitude ? `<div><i class="fas fa-map"></i> <a href="https://www.google.com/maps/search/?api=1&query=${biz.latitude},${biz.longitude}" target="_blank">View on Google Maps</a></div>` : ""}
     </div>
     <p>${biz.description || ""}</p>
     ${biz.deals?.length ? "<h3>Deals & Coupons</h3>" : ""}
@@ -268,7 +484,7 @@ function openDetails(id) {
     <h3>Reviews</h3>
     <div class="reviews">
       ${
-        biz.reviews.length
+        biz.reviews && biz.reviews.length
           ? biz.reviews
               .slice()
               .reverse()
@@ -283,7 +499,7 @@ function openDetails(id) {
                   </div>`
               )
               .join("")
-          : `<div class="empty">No reviews yet.</div>`
+          : `<div class="empty">No reviews yet. Be the first to review!</div>`
       }
     </div>
     <h3>Add a Review</h3>
@@ -348,6 +564,7 @@ function openDetails(id) {
       alert("Verification failed. Please try again.");
       return;
     }
+    if (!biz.reviews) biz.reviews = [];
     biz.reviews.push({
       user_name: name,
       rating,
@@ -355,7 +572,7 @@ function openDetails(id) {
       date: new Date().toISOString().split("T")[0]
     });
     saveState();
-    openDetails(biz.id); // re-render modal
+    openDetails(biz.id);
     render();
   });
 }
@@ -389,9 +606,10 @@ function addBusinessFlow() {
   const dealTitle = prompt("Add a deal title? (optional)", "");
   const dealDesc = dealTitle ? prompt("Deal description:", "") : "";
   const dealExpires = dealTitle ? prompt("Deal expires (YYYY-MM-DD):", "") : "";
-  const captcha = Math.floor(Math.random() * 10) + Math.floor(Math.random() * 10);
-  const answer = prompt(`Verification: What is ${captcha}?`);
-  if (String(captcha) !== String(answer)) {
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  const answer = prompt(`Verification: What is ${a} + ${b}?`);
+  if (String(a + b) !== String(answer)) {
     alert("Verification failed.");
     return;
   }
@@ -434,10 +652,34 @@ function bindEvents() {
   qs("modal").addEventListener("click", e => {
     if (e.target.id === "modal") closeModal();
   });
+
+  // Location events
+  qs("useCurrentLocation").addEventListener("click", getCurrentLocation);
+  qs("searchLocation").addEventListener("click", searchByLocationText);
+  qs("locationInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      searchByLocationText();
+    }
+  });
+
+  // API Key events
+  qs("enterApiKey")?.addEventListener("click", showApiKeyModal);
+  qs("showApiKeyHelp")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.open("https://developers.google.com/maps/documentation/places/web-service/get-api-key", "_blank");
+  });
+  qs("saveApiKey")?.addEventListener("click", () => {
+    const key = qs("apiKeyInput").value.trim();
+    if (key) {
+      saveApiKey(key);
+    }
+  });
+  qs("cancelApiKey")?.addEventListener("click", hideApiKeyModal);
 }
 
 function init() {
   els.list = qs("businessList");
+  loadApiKey();
   loadState();
   buildCategories();
   bindEvents();
@@ -445,4 +687,3 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
-

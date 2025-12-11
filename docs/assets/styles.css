@@ -90,6 +90,88 @@ body {
   color: var(--muted);
 }
 
+.location-selector {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.location-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.location-input-group input {
+  flex: 1;
+}
+
+.location-status {
+  font-size: 14px;
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.location-status.status-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.location-status.status-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.location-status.status-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.api-key-banner {
+  background: #fef3c7;
+  border-bottom: 2px solid #fbbf24;
+  padding: 12px 0;
+}
+
+.api-key-banner .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.api-key-banner p {
+  margin: 0;
+  color: #92400e;
+  font-size: 14px;
+}
+
+.api-key-banner a,
+.api-key-banner .btn-link {
+  color: #78350f;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 14px;
+  padding: 0;
+}
+
+.api-key-banner a:hover,
+.api-key-banner .btn-link:hover {
+  color: #451a03;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
 .hero-actions {
   display: flex;
   gap: 10px;
