@@ -26,7 +26,7 @@
       <div>
         <p class="eyebrow">Support Local</p>
         <h1>Discover small businesses near you.</h1>
-        <p class="sub">Browse by category, see ratings, save favorites, and find deals — all in one place.</p>
+        <p class="sub">Browse by category, see ratings, save favorites, and find deals — all in one place. <strong>100% free</strong> using OpenStreetMap data!</p>
         <div class="location-selector" id="locationSelector">
           <div class="location-input-group">
             <input type="text" id="locationInput" placeholder="Enter city, address, or zip code" />
@@ -57,22 +57,9 @@
     </div>
   </header>
 
-  <div class="api-key-banner" id="apiKeyBanner" style="display: none;">
+  <div class="api-key-banner" id="apiKeyBanner" style="display: none; background: #d1fae5; border-bottom: 2px solid #10b981;">
     <div class="container">
-      <p><i class="fas fa-info-circle"></i> <strong>Google API Key Required:</strong> To find real local businesses, please enter your Google Places API key. <a href="#" id="showApiKeyHelp">Get a free API key</a> | <button class="btn-link" id="enterApiKey">Enter Key</button></p>
-    </div>
-  </div>
-
-  <div class="modal" id="apiKeyModal" style="display: none;">
-    <div class="modal-content">
-      <h2>Google Places API Key</h2>
-      <p>Enter your Google Places API key to search for real local businesses. <a href="https://developers.google.com/maps/documentation/places/web-service/get-api-key" target="_blank">Get a free API key here</a></p>
-      <p style="font-size: 14px; color: #64748b; margin-top: 8px;">The Google Places API works directly in your browser - no backend needed!</p>
-      <input type="text" id="apiKeyInput" placeholder="Your Google Places API Key" />
-      <div class="modal-actions">
-        <button class="btn primary" id="saveApiKey">Save</button>
-        <button class="btn ghost" id="cancelApiKey">Cancel</button>
-      </div>
+      <p><i class="fas fa-check-circle"></i> <strong>100% Free!</strong> Using OpenStreetMap - no API key needed. Just enter a location and start searching!</p>
     </div>
   </div>
 

@@ -1,5 +1,5 @@
 // Byte-Sized Business Boost - Real Local Business Finder
-// Uses Google Places API (works directly in browser - no backend needed!)
+// Uses OpenStreetMap Overpass API - 100% FREE, no API key needed!
 
 // Sample businesses as fallback
 const sampleBusinesses = [
@@ -23,10 +23,7 @@ const state = {
   favorites: new Set(),
   filters: { search: "", category: "", sort: "name" },
   currentLocation: null,
-  apiKey: null,
-  loading: false,
-  placesService: null,
-  map: null
+  loading: false
 };
 
 const els = {};
@@ -35,70 +32,8 @@ function qs(id) {
   return document.getElementById(id);
 }
 
-// API Key Management
-function loadApiKey() {
-  const stored = localStorage.getItem("bsbb-google-api-key");
-  if (stored) {
-    state.apiKey = stored;
-    qs("apiKeyBanner").style.display = "none";
-    initializeGooglePlaces();
-    return true;
-  }
-  qs("apiKeyBanner").style.display = "block";
-  return false;
-}
+// No API key needed - OpenStreetMap is completely free!
 
-function saveApiKey(key) {
-  state.apiKey = key;
-  localStorage.setItem("bsbb-google-api-key", key);
-  qs("apiKeyBanner").style.display = "none";
-  qs("apiKeyModal").style.display = "none";
-  
-  // Update the Google Maps script with new API key
-  const script = document.querySelector('script[src*="maps.googleapis.com"]');
-  if (script) {
-    script.src = script.src.replace(/key=[^&]+/, `key=${key}`);
-  } else {
-    // Add script if it doesn't exist
-    const newScript = document.createElement('script');
-    newScript.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initializeGooglePlaces`;
-    newScript.async = true;
-    newScript.defer = true;
-    document.head.appendChild(newScript);
-  }
-  
-  initializeGooglePlaces();
-  if (state.currentLocation) {
-    searchBusinesses(state.currentLocation);
-  }
-}
-
-function initializeGooglePlaces() {
-  if (!state.apiKey || typeof google === 'undefined' || !google.maps) {
-    return;
-  }
-  
-  // Initialize a hidden map (required for PlacesService)
-  if (!state.map) {
-    state.map = new google.maps.Map(document.createElement('div'));
-  }
-  
-  if (!state.placesService) {
-    state.placesService = new google.maps.places.PlacesService(state.map);
-  }
-}
-
-// Make initializeGooglePlaces available globally for callback
-window.initializeGooglePlaces = initializeGooglePlaces;
-
-function showApiKeyModal() {
-  qs("apiKeyModal").style.display = "flex";
-  qs("apiKeyInput").value = state.apiKey || "";
-}
-
-function hideApiKeyModal() {
-  qs("apiKeyModal").style.display = "none";
-}
 
 // Geolocation
 function getCurrentLocation() {
@@ -139,108 +74,202 @@ function searchByLocationText() {
   searchBusinesses(locationText);
 }
 
-// Google Places API Integration
-function searchBusinesses(location) {
-  if (!state.apiKey) {
-    showStatus("Please enter your Google Places API key to search for businesses.", "error");
-    showApiKeyModal();
-    return;
-  }
-
-  if (!state.placesService) {
-    showStatus("Initializing Google Places...", "info");
-    initializeGooglePlaces();
-    if (!state.placesService) {
-      showStatus("Google Places API not loaded. Please check your API key.", "error");
-      return;
-    }
-  }
-
+// OpenStreetMap Overpass API Integration - 100% FREE!
+async function searchBusinesses(location) {
   state.loading = true;
   showStatus("Searching for local businesses...", "info");
 
-  // Build search request
-  const request = {
-    query: getSearchQuery(),
-    fields: ['name', 'formatted_address', 'formatted_phone_number', 'rating', 'user_ratings_total', 'types', 'place_id', 'geometry'],
-    locationBias: typeof location === 'string' ? undefined : new google.maps.LatLng(location.latitude, location.longitude)
-  };
-
-  // If location is a string, use it as query
-  if (typeof location === 'string') {
-    request.query = `${getSearchQuery()} in ${location}`;
-  }
-
-  state.placesService.textSearch(request, (results, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-      // Transform Google Places data to our format
-      state.businesses = results.map(place => ({
-        id: place.place_id,
-        name: place.name,
-        category: mapGoogleCategory(place.types),
-        address: place.formatted_address || 'Address not available',
-        phone: place.formatted_phone_number || 'No phone listed',
-        description: place.types ? place.types.slice(0, 3).join(', ') : '',
-        rating: place.rating || 0,
-        review_count: place.user_ratings_total || 0,
-        latitude: place.geometry?.location?.lat(),
-        longitude: place.geometry?.location?.lng(),
-        deals: [], // Users can add deals
-        reviews: [] // We'll use Google's review count, but store our own reviews
-      }));
-
-      showStatus(`Found ${state.businesses.length} businesses!`, "success");
-      buildCategories();
-      render();
-      state.loading = false;
-    } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-      showStatus("No businesses found. Try a different location.", "error");
-      state.businesses = sampleBusinesses;
-      buildCategories();
-      render();
-      state.loading = false;
+  try {
+    let lat, lon;
+    
+    // Get coordinates from location
+    if (typeof location === 'string') {
+      // Geocode the location string first
+      const coords = await geocodeLocation(location);
+      if (!coords) {
+        throw new Error("Could not find location. Please try a more specific address.");
+      }
+      lat = coords.lat;
+      lon = coords.lon;
     } else {
-      console.error("Places API error:", status);
-      showStatus(`Error: ${status}. Using sample data.`, "error");
+      lat = location.latitude;
+      lon = location.longitude;
+    }
+
+    // Build Overpass query to find businesses within 2km radius
+    const radius = 2000; // 2km in meters
+    const categoryTags = getOSMCategoryTags();
+    
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
+        node["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
+        way["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
+        way["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
+      );
+      out center meta;
+    `;
+
+    // Use Overpass API (free, no key needed)
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `data=${encodeURIComponent(query)}`
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.elements || data.elements.length === 0) {
+      showStatus("No businesses found. Try a different location or add businesses manually!", "info");
       state.businesses = sampleBusinesses;
       buildCategories();
       render();
       state.loading = false;
+      return;
     }
-  });
-}
 
-function getSearchQuery() {
-  // Build search query based on category filter
-  const categoryMap = {
-    'food': 'restaurant cafe food',
-    'retail': 'store shop retail',
-    'services': 'service business'
-  };
-  
-  if (state.filters.category && categoryMap[state.filters.category]) {
-    return categoryMap[state.filters.category];
+    // Transform OpenStreetMap data to our format
+    state.businesses = data.elements
+      .filter(element => element.tags && element.tags.name) // Only include named places
+      .map(element => {
+        const center = element.center || { lat: element.lat, lon: element.lon };
+        return {
+          id: `osm_${element.type}_${element.id}`,
+          name: element.tags.name || 'Unnamed Business',
+          category: mapOSMCategory(element.tags),
+          address: formatOSMAddress(element.tags, center),
+          phone: element.tags['phone'] || element.tags['contact:phone'] || 'No phone listed',
+          description: buildOSMDescription(element.tags),
+          rating: 0, // OSM doesn't have ratings, users can add reviews
+          review_count: 0,
+          latitude: center.lat,
+          longitude: center.lon,
+          website: element.tags['website'] || element.tags['contact:website'] || null,
+          opening_hours: element.tags['opening_hours'] || null,
+          deals: [],
+          reviews: []
+        };
+      });
+
+    showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
+    buildCategories();
+    render();
+    state.loading = false;
+
+  } catch (error) {
+    console.error("Error fetching businesses:", error);
+    showStatus(`Error: ${error.message}. Using sample data.`, "error");
+    state.businesses = sampleBusinesses;
+    buildCategories();
+    render();
+    state.loading = false;
   }
-  
-  return 'local business small business';
 }
 
-function mapGoogleCategory(types) {
-  if (!types || types.length === 0) return 'services';
+// Geocode location string to coordinates using Nominatim (free)
+async function geocodeLocation(locationString) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString)}&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'BusinessBoost/1.0' // Required by Nominatim
+        }
+      }
+    );
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    if (data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon)
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    return null;
+  }
+}
+
+function getOSMCategoryTags() {
+  const category = state.filters.category;
   
-  const typeStr = types.join(' ').toLowerCase();
+  if (category === 'food') {
+    return {
+      shop: 'supermarket|bakery|butcher|confectionery|convenience',
+      amenity: 'restaurant|cafe|fast_food|bar|pub|food_court|ice_cream'
+    };
+  } else if (category === 'retail') {
+    return {
+      shop: '.*', // All shops
+      amenity: 'marketplace|vending_machine'
+    };
+  } else if (category === 'services') {
+    return {
+      shop: 'hairdresser|beauty|laundry|dry_cleaning|car_repair|car_wash',
+      amenity: 'bank|pharmacy|post_office|library|community_centre|dentist|doctors|veterinary'
+    };
+  } else {
+    // All categories
+    return {
+      shop: '.*',
+      amenity: 'restaurant|cafe|fast_food|bar|pub|bank|pharmacy|post_office|library|marketplace'
+    };
+  }
+}
+
+function mapOSMCategory(tags) {
+  const shop = tags.shop || '';
+  const amenity = tags.amenity || '';
+  const combined = `${shop} ${amenity}`.toLowerCase();
   
-  if (typeStr.includes('restaurant') || typeStr.includes('food') || 
-      typeStr.includes('cafe') || typeStr.includes('meal') ||
-      typeStr.includes('bakery') || typeStr.includes('bar')) {
+  if (combined.includes('restaurant') || combined.includes('cafe') || 
+      combined.includes('food') || combined.includes('bar') || 
+      combined.includes('pub') || combined.includes('bakery') ||
+      combined.includes('fast_food') || combined.includes('ice_cream')) {
     return 'food';
   }
-  if (typeStr.includes('store') || typeStr.includes('shop') ||
-      typeStr.includes('retail') || typeStr.includes('market') ||
-      typeStr.includes('shopping')) {
+  if (combined.includes('shop') || combined.includes('store') || 
+      combined.includes('market') || combined.includes('supermarket') ||
+      combined.includes('retail') || combined.includes('mall')) {
     return 'retail';
   }
   return 'services';
+}
+
+function formatOSMAddress(tags, coords) {
+  const parts = [];
+  if (tags['addr:housenumber']) parts.push(tags['addr:housenumber']);
+  if (tags['addr:street']) parts.push(tags['addr:street']);
+  if (tags['addr:city']) parts.push(tags['addr:city']);
+  if (tags['addr:postcode']) parts.push(tags['addr:postcode']);
+  
+  if (parts.length > 0) {
+    return parts.join(' ');
+  }
+  
+  // Fallback: use coordinates area
+  return `Near ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+}
+
+function buildOSMDescription(tags) {
+  const parts = [];
+  if (tags.shop) parts.push(tags.shop);
+  if (tags.amenity) parts.push(tags.amenity);
+  if (tags.cuisine) parts.push(`${tags.cuisine} cuisine`);
+  if (tags.brand) parts.push(tags.brand);
+  
+  return parts.length > 0 ? parts.join(', ') : 'Local business';
 }
 
 function showStatus(message, type = 'info') {
@@ -392,7 +421,7 @@ function render() {
   
   const data = filteredBusinesses();
   if (!data.length) {
-    list.innerHTML = `<div class="empty">No businesses found. ${state.apiKey ? 'Try another search or location.' : 'Enter your Google Places API key to search for real businesses.'}</div>`;
+    list.innerHTML = `<div class="empty">No businesses found. Try another search or location, or add businesses manually!</div>`;
     return;
   }
   data.forEach(biz => list.appendChild(cardForBusiness(biz)));
@@ -467,7 +496,9 @@ function openDetails(id) {
     <div class="detail-meta">
       <div><i class="fas fa-map-marker-alt"></i> ${biz.address}</div>
       <div><i class="fas fa-phone"></i> ${biz.phone || "No phone listed"}</div>
-      ${biz.latitude && biz.longitude ? `<div><i class="fas fa-map"></i> <a href="https://www.google.com/maps/search/?api=1&query=${biz.latitude},${biz.longitude}" target="_blank">View on Google Maps</a></div>` : ""}
+      ${biz.latitude && biz.longitude ? `<div><i class="fas fa-map"></i> <a href="https://www.openstreetmap.org/?mlat=${biz.latitude}&mlon=${biz.longitude}&zoom=15" target="_blank">View on OpenStreetMap</a></div>` : ""}
+      ${biz.website ? `<div><i class="fas fa-globe"></i> <a href="${biz.website}" target="_blank">Visit Website</a></div>` : ""}
+      ${biz.opening_hours ? `<div><i class="fas fa-clock"></i> ${biz.opening_hours}</div>` : ""}
     </div>
     <p>${biz.description || ""}</p>
     ${biz.deals?.length ? "<h3>Deals & Coupons</h3>" : ""}
@@ -662,24 +693,13 @@ function bindEvents() {
     }
   });
 
-  // API Key events
-  qs("enterApiKey")?.addEventListener("click", showApiKeyModal);
-  qs("showApiKeyHelp")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.open("https://developers.google.com/maps/documentation/places/web-service/get-api-key", "_blank");
-  });
-  qs("saveApiKey")?.addEventListener("click", () => {
-    const key = qs("apiKeyInput").value.trim();
-    if (key) {
-      saveApiKey(key);
-    }
-  });
-  qs("cancelApiKey")?.addEventListener("click", hideApiKeyModal);
+  // No API key needed - OpenStreetMap is free!
 }
 
 function init() {
   els.list = qs("businessList");
-  loadApiKey();
+  // Hide API key banner - not needed with OpenStreetMap
+  qs("apiKeyBanner").style.display = "none";
   loadState();
   buildCategories();
   bindEvents();

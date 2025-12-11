@@ -1,93 +1,58 @@
-# Google Places API Setup Guide
+# No API Key Needed! 🎉
 
-The Google Places API **works directly in your browser** - no backend proxy needed! 🎉
+This website uses **OpenStreetMap** - a completely free, open-source mapping service. **No API key required!**
 
-## Step 1: Create a Google Cloud Project
+## How It Works
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Sign in with your Google account
-3. Click "Create Project" or select an existing project
-4. Give it a name (e.g., "Business Boost")
-5. Click "Create"
+The website uses two free services:
 
-## Step 2: Enable Places API
+1. **Overpass API** - Queries OpenStreetMap for local businesses
+2. **Nominatim** - Geocodes location names to coordinates
 
-1. In your project, go to **APIs & Services** > **Library**
-2. Search for "Places API"
-3. Click on **Places API**
-4. Click **Enable**
+Both are:
+- ✅ **100% Free** - No cost, ever
+- ✅ **No API Key** - Works immediately
+- ✅ **No Registration** - Just use it
+- ✅ **Open Source** - Community-driven data
 
-## Step 3: Create API Key
+## Using the Website
 
-1. Go to **APIs & Services** > **Credentials**
-2. Click **Create Credentials** > **API Key**
-3. Your API key will be created
-4. (Optional) Click "Restrict Key" to add restrictions:
-   - **Application restrictions**: HTTP referrers
-   - Add your website URL (e.g., `https://yourusername.github.io/*`)
-   - **API restrictions**: Select "Restrict key" and choose "Places API"
+1. **Enter a location** (city, address, or zip code) OR
+2. **Click "Use My Location"** to find businesses near you
+3. **Browse real local businesses** from OpenStreetMap!
 
-## Step 4: Enter Your API Key
+## What Data You Get
 
-1. Open the website
-2. Click "Enter Key" in the banner at the top
-3. Paste your Google Places API Key
-4. Click "Save"
+- Business names
+- Addresses
+- Phone numbers (when available)
+- Business types/categories
+- Website links (when available)
+- Opening hours (when available)
+- Map coordinates
 
-## Step 5: Start Searching!
+## Limitations
 
-1. Enter a location (city, address, or zip code) OR
-2. Click "Use My Location" to find businesses near you
-3. Browse real local businesses!
+- **No ratings/reviews** - OpenStreetMap doesn't include ratings, but you can add your own reviews!
+- **Coverage varies** - Some areas have more businesses than others
+- **Data quality** - Depends on community contributions
 
-## Pricing
+## Adding Your Own Businesses
 
-- **Free Tier**: $200 free credit per month
-- **Places API (Text Search)**: $32 per 1,000 requests
-- With free credit: ~6,250 free searches per month
-- After free credit: Pay-as-you-go pricing
+If you don't find a business:
+1. Click "Add Business" button
+2. Enter the business details
+3. Share it with others!
 
-**Note**: The free credit is usually more than enough for personal use!
+## Contributing to OpenStreetMap
 
-## Why Google Places API?
+Want to improve the data? You can add businesses to OpenStreetMap at [openstreetmap.org](https://www.openstreetmap.org) - it's free and helps everyone!
 
-✅ **Works directly in browser** - No backend needed!  
-✅ **No CORS issues** - Designed for client-side use  
-✅ **Rich data** - Ratings, reviews, photos, hours  
-✅ **Reliable** - Google's infrastructure  
-✅ **Free tier** - $200/month free credit  
+## Why OpenStreetMap?
 
-## Troubleshooting
+- **Free forever** - No hidden costs
+- **Community-driven** - Updated by millions of contributors
+- **Privacy-friendly** - No tracking
+- **Open data** - Anyone can use it
 
-**"API key not valid" error:**
-- Make sure you copied the entire API key
-- Check that Places API is enabled in your project
-- Verify your API key restrictions (if any)
-
-**"This API project is not authorized" error:**
-- Make sure Places API is enabled in your Google Cloud project
-- Check that billing is enabled (free tier still requires billing account)
-
-**"No businesses found":**
-- Try a different location
-- Make sure your location is specific (city name works best)
-- Check that your API key has Places API enabled
-
-**"Quota exceeded" error:**
-- You've used up your free credit
-- Check your usage in Google Cloud Console
-- Consider upgrading your plan or waiting for next month's credit
-
-## Alternative: Use Sample Data
-
-If you don't want to set up an API key, the website will use sample businesses. You can still:
-- Add your own businesses
-- Leave reviews
-- Save favorites
-- Use all other features
-
-## Need Help?
-
-- [Google Places API Documentation](https://developers.google.com/maps/documentation/places/web-service)
-- [Places API JavaScript SDK](https://developers.google.com/maps/documentation/places/web-service)
-- [Google Cloud Console](https://console.cloud.google.com/)
+Enjoy discovering local businesses! 🏪
