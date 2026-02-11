@@ -11,6 +11,7 @@ import random
 import string
 from datetime import datetime
 from typing import Dict, List, Optional
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24).hex()  # Generate a secret key for sessions
@@ -20,6 +21,9 @@ from models import Business, BusinessBoost
 
 # Initialize the business boost system
 business_boost = BusinessBoost()
+
+# Foursquare API key (set this in your environment, do NOT hard-code it)
+FOURSQUARE_API_KEY = os.getenv("FOURSQUARE_API_KEY")
 
 
 @app.route('/')
@@ -297,8 +301,56 @@ def category_view(category_name):
                          page_title=f'{category_name.title()} Businesses')
 
 
+@app.route('/api/foursquare/places')
+def foursquare_places():
+    """
+    Proxy endpoint to search places via Foursquare Places API.
+    Keeps the Foursquare API key on the server so it is never exposed to the browser.
+    """
+    if not FOURSQUARE_API_KEY:
+        return jsonify(
+            {"error": "FOURSQUARE_API_KEY is not set on the server."}
+        ), 500
+
+    lat = request.args.get("lat")
+    lon = request.args.get("lon")
+    query = request.args.get("q", "small business")
+    category = request.args.get("category")
+    radius = request.args.get("radius", "2000")  # meters
+    limit = request.args.get("limit", "20")
+
+    if not lat or not lon:
+        return jsonify({"error": "lat and lon query parameters are required."}), 400
+
+    params = {
+        "ll": f"{lat},{lon}",
+        "radius": radius,
+        "limit": limit,
+        "query": query,
+        # sort by relevance / distance is default
+    }
+
+    # Optional category filtering (Foursquare category IDs or query)
+    if category:
+        params["categories"] = category
+
+    try:
+        resp = requests.get(
+            "https://api.foursquare.com/v3/places/search",
+            headers={"Authorization": FOURSQUARE_API_KEY},
+            params=params,
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Foursquare request failed: {e}"}), 502
+
+    data = resp.json()
+
+    # Option 1: return Foursquare JSON as-is
+    return jsonify(data)
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
-
-# Hi Hannah :)
