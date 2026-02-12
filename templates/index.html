@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if page_title %}{{ page_title }} - {% else %}Home - {% endif %}Business Boost{% endblock %}
+{% block title %}{% if page_title %}{{ page_title }} - {% else %}Explore - {% endif %}Chrysalis Connect{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -44,7 +44,7 @@
     {% endif %}
 
     <div class="filters-section">
-        <form method="GET" action="{{ url_for('index') }}" class="filters-form">
+        <form method="GET" action="{{ url_for('directory') }}" class="filters-form">
             <div class="filter-group">
                 <label for="search"><i class="fas fa-search"></i> Search</label>
                 <input type="text" id="search" name="search" placeholder="Search by name, category, or address..." value="{{ search_query }}">
@@ -96,8 +96,10 @@
                             {% set review_count = business.get_review_count() %}
                             {% if review_count > 0 %}
                                 <div class="stars">
+                                    {# Round to nearest whole star for display (4.6→5, 4.4→4). #}
+                                    {% set filled_stars = (avg_rating + 0.5) | int %}
                                     {% for i in range(5) %}
-                                        <i class="fas fa-star {% if i < avg_rating|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                        <i class="fas fa-star {% if i < filled_stars %}star-filled{% else %}star-empty{% endif %}"></i>
                                     {% endfor %}
                                 </div>
                                 <span class="rating-text">{{ "%.1f"|format(avg_rating) }}/5.0 ({{ review_count }} review{{ 's' if review_count != 1 else '' }})</span>

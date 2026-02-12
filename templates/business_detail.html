@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ business.name }} - Business Boost{% endblock %}
+{% block title %}{{ business.name }} - Chrysalis Connect{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -60,8 +60,10 @@
                         <div class="rating-display">
                             <div class="rating-number">{{ "%.1f"|format(avg_rating) }}</div>
                             <div class="stars-large">
+                                {# Round to nearest whole star for display (4.6→5, 4.4→4). #}
+                                {% set filled_stars = (avg_rating + 0.5) | int %}
                                 {% for i in range(5) %}
-                                    <i class="fas fa-star {% if i < avg_rating|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                    <i class="fas fa-star {% if i < filled_stars %}star-filled{% else %}star-empty{% endif %}"></i>
                                 {% endfor %}
                             </div>
                             <div class="rating-count">{{ review_count }} review{{ 's' if review_count != 1 else '' }}</div>
@@ -157,7 +159,7 @@
                             <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Review</button>
                         </form>
                     {% else %}
-                        <p class="info-message">Please <a href="{{ url_for('index') }}">enter your name</a> to leave a review.</p>
+                        <p class="info-message">Please <a href="{{ url_for('directory') }}">enter your name</a> to leave a review.</p>
                     {% endif %}
                 </div>
             </div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}My Favorites - Business Boost{% endblock %}
+{% block title %}My Favorites - Chrysalis Connect{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -29,8 +29,10 @@
                             {% set review_count = business.get_review_count() %}
                             {% if review_count > 0 %}
                                 <div class="stars">
+                                    {# Round to nearest whole star for display. #}
+                                    {% set filled_stars = (avg_rating + 0.5) | int %}
                                     {% for i in range(5) %}
-                                        <i class="fas fa-star {% if i < avg_rating|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                        <i class="fas fa-star {% if i < filled_stars %}star-filled{% else %}star-empty{% endif %}"></i>
                                     {% endfor %}
                                 </div>
                                 <span class="rating-text">{{ "%.1f"|format(avg_rating) }}/5.0 ({{ review_count }} review{{ 's' if review_count != 1 else '' }})</span>
@@ -56,7 +58,7 @@
             <i class="fas fa-heart"></i>
             <h2>No favorites yet</h2>
             <p>Start exploring businesses and add them to your favorites!</p>
-            <a href="{{ url_for('index') }}" class="btn btn-primary">Browse Businesses</a>
+            <a href="{{ url_for('directory') }}" class="btn btn-primary">Explore Businesses</a>
         </div>
     {% endif %}
 </div>
