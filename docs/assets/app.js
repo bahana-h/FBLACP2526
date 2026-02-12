@@ -32,6 +32,42 @@ function qs(id) {
   return document.getElementById(id);
 }
 
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function starMeterHTML(rating) {
+  // Render fractional stars using a CSS meter overlay.
+  // Example: rating=4.3 fills 86% of the 5-star bar.
+  const r = clamp(Number(rating) || 0, 0, 5);
+  return `<span class="stars-meter" style="--rating:${r.toFixed(2)}" aria-label="${r.toFixed(
+    1
+  )} out of 5 stars"></span>`;
+}
+
+function mergeLocalReviewsInto(newBusinesses) {
+  // When we re-search Overpass, we rebuild `state.businesses` from scratch.
+  // Without this merge, any locally-stored reviews would appear to "disappear"
+  // because the new objects overwrite the old ones.
+  const oldById = new Map((state.businesses || []).map(b => [b.id, b]));
+  return newBusinesses.map(b => {
+    const old = oldById.get(b.id);
+    if (old && Array.isArray(old.reviews) && old.reviews.length) {
+      b.reviews = Array.isArray(b.reviews) ? b.reviews : [];
+      // Merge old local reviews first (dedupe by simple signature).
+      const seen = new Set(b.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`));
+      for (const r of old.reviews) {
+        const key = `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`;
+        if (!seen.has(key)) {
+          b.reviews.push(r);
+          seen.add(key);
+        }
+      }
+    }
+    return b;
+  });
+}
+
 // =============================================================================
 // Shared reviews across users (GitHub Pages + deployed backend)
 // =============================================================================
@@ -236,7 +272,8 @@ async function searchBusinesses(location) {
     
     if (!data.elements || data.elements.length === 0) {
       showStatus("No businesses found. Try a different location or add businesses manually!", "info");
-      state.businesses = sampleBusinesses;
+      state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
+      await syncSharedReviewsIntoState();
       buildCategories();
       render();
       state.loading = false;
@@ -244,7 +281,7 @@ async function searchBusinesses(location) {
     }
 
     // Transform OpenStreetMap data to our format
-    state.businesses = data.elements
+    const nextBusinesses = data.elements
       .filter(element => element.tags && element.tags.name) // Only include named places
       .map(element => {
         const center = element.center || { lat: element.lat, lon: element.lon };
@@ -268,6 +305,7 @@ async function searchBusinesses(location) {
         };
       });
 
+    state.businesses = mergeLocalReviewsInto(nextBusinesses);
     showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
     // Merge in shared reviews from backend (if configured) before rendering.
     await syncSharedReviewsIntoState();
@@ -279,7 +317,7 @@ async function searchBusinesses(location) {
   } catch (error) {
     console.error("Error fetching businesses:", error);
     showStatus(`Error: ${error.message}. Using sample data.`, "error");
-    state.businesses = sampleBusinesses;
+    state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
     await syncSharedReviewsIntoState();
     saveState();
     buildCategories();
@@ -560,7 +598,7 @@ function cardForBusiness(biz) {
   const rating = averageRating(biz);
   const rc = totalReviews(biz);
   tpl.querySelector(".rating-row").innerHTML = `
-    <span class="stars">${"★".repeat(Math.round(rating))}${"☆".repeat(5 - Math.round(rating))}</span>
+    ${starMeterHTML(rating)}
     <span>${rating.toFixed(1)} / 5 (${rc} review${rc === 1 ? "" : "s"})</span>
   `;
 
@@ -605,7 +643,7 @@ function openDetails(id) {
         <div class="pill-inline category-${biz.category}">${biz.category}</div>
         <h2>${biz.name}</h2>
         <div class="rating-row">
-          <span class="stars">${"★".repeat(Math.round(averageRating(biz)))}${"☆".repeat(5 - Math.round(averageRating(biz)))}</span>
+          ${starMeterHTML(averageRating(biz))}
           <span>${averageRating(biz).toFixed(1)} / 5 (${totalReviews(biz)} reviews)</span>
         </div>
       </div>
@@ -856,6 +894,16 @@ function init() {
   buildCategories();
   bindEvents();
   render();
+
+  const landingBtn = qs("landingScrollBtn");
+  if (landingBtn) {
+    landingBtn.addEventListener("click", () => {
+      // Scroll into the directory section, then trigger location flow.
+      const el = document.getElementById("directory");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => getCurrentLocation(), 350);
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
