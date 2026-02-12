@@ -1,4 +1,4 @@
-// Byte-Sized Business Boost - Real Local Business Finder
+// Chrysalis Connect (Static) - Real Local Business Finder
 // Uses OpenStreetMap Overpass API - 100% FREE, no API key needed!
 
 // Sample businesses as fallback
@@ -30,6 +30,114 @@ const els = {};
 
 function qs(id) {
   return document.getElementById(id);
+}
+
+// =============================================================================
+// Shared reviews across users (GitHub Pages + deployed backend)
+// =============================================================================
+//
+// GitHub Pages is static hosting, so it cannot store shared reviews by itself.
+// To make reviews shared across users/devices, we POST reviews to a backend API.
+//
+// Backend requirements (Flask app):
+// - GET  /api/health
+// - POST /api/shared-reviews/bulk
+// - POST /api/shared-reviews
+//
+// The static site stores the backend URL locally so you only set it once.
+// If no backend is configured, reviews still work locally (localStorage only).
+//
+const BACKEND_URL_KEY = "cc-backend-url";
+
+function getBackendBaseUrl() {
+  const url = (localStorage.getItem(BACKEND_URL_KEY) || "").trim();
+  return url.replace(/\/+$/, "");
+}
+
+function setBackendBaseUrl(url) {
+  localStorage.setItem(BACKEND_URL_KEY, (url || "").trim());
+}
+
+async function backendHealthOk(baseUrl) {
+  try {
+    const resp = await fetch(`${baseUrl}/api/health`, { method: "GET" });
+    if (!resp.ok) return false;
+    const data = await resp.json();
+    return Boolean(data && data.ok);
+  } catch {
+    return false;
+  }
+}
+
+async function fetchSharedReviewsForBusinesses(businessIds) {
+  const baseUrl = getBackendBaseUrl();
+  if (!baseUrl) return null;
+
+  const ok = await backendHealthOk(baseUrl);
+  if (!ok) return null;
+
+  const resp = await fetch(`${baseUrl}/api/shared-reviews/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ business_ids: businessIds })
+  });
+  if (!resp.ok) return null;
+  return await resp.json(); // { reviews_by_id: { ... } }
+}
+
+async function postSharedReview({ business_id, user_name, rating, comment }) {
+  const baseUrl = getBackendBaseUrl();
+  if (!baseUrl) return { ok: false, error: "Backend URL not set." };
+
+  const ok = await backendHealthOk(baseUrl);
+  if (!ok) return { ok: false, error: "Backend not reachable." };
+
+  const resp = await fetch(`${baseUrl}/api/shared-reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ business_id, user_name, rating, comment, verified: true })
+  });
+
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) return { ok: false, error: data.error || "Failed to save review." };
+  return data;
+}
+
+async function syncSharedReviewsIntoState() {
+  const baseUrl = getBackendBaseUrl();
+  if (!baseUrl) return;
+
+  const ids = state.businesses.map(b => b.id).filter(Boolean);
+  if (!ids.length) return;
+
+  const payload = await fetchSharedReviewsForBusinesses(ids);
+  if (!payload || !payload.reviews_by_id) return;
+
+  for (const biz of state.businesses) {
+    const shared = payload.reviews_by_id[biz.id] || [];
+    if (!Array.isArray(shared) || shared.length === 0) continue;
+
+    biz.reviews = Array.isArray(biz.reviews) ? biz.reviews : [];
+    const seen = new Set(biz.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`));
+
+    for (const r of shared) {
+      const key = `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`;
+      if (!seen.has(key)) {
+        biz.reviews.push(r);
+        seen.add(key);
+      }
+    }
+  }
+}
+
+function showBackendStatus() {
+  const baseUrl = getBackendBaseUrl();
+  if (!baseUrl) {
+    // Keep it subtle: local-only mode still works, just not shared.
+    showStatus("Shared reviews: OFF (set backend URL in Shared Reviews).", "info");
+    return;
+  }
+  showStatus(`Shared reviews: ON (${baseUrl})`, "success");
 }
 
 // No API key needed - OpenStreetMap is completely free!
@@ -147,7 +255,9 @@ async function searchBusinesses(location) {
           address: formatOSMAddress(element.tags, center),
           phone: element.tags['phone'] || element.tags['contact:phone'] || 'No phone listed',
           description: buildOSMDescription(element.tags),
-          rating: 0, // OSM doesn't have ratings, users can add reviews
+          // OSM doesn't have ratings; we compute average from user reviews.
+          // Leave `rating` undefined so averageRating() falls back to reviews.
+          rating: undefined,
           review_count: 0,
           latitude: center.lat,
           longitude: center.lon,
@@ -159,6 +269,9 @@ async function searchBusinesses(location) {
       });
 
     showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
+    // Merge in shared reviews from backend (if configured) before rendering.
+    await syncSharedReviewsIntoState();
+    saveState();
     buildCategories();
     render();
     state.loading = false;
@@ -167,6 +280,8 @@ async function searchBusinesses(location) {
     console.error("Error fetching businesses:", error);
     showStatus(`Error: ${error.message}. Using sample data.`, "error");
     state.businesses = sampleBusinesses;
+    await syncSharedReviewsIntoState();
+    saveState();
     buildCategories();
     render();
     state.loading = false;
@@ -286,7 +401,9 @@ function showStatus(message, type = 'info') {
 }
 
 function loadState() {
-  const stored = localStorage.getItem("bsbb-data");
+  // Local persistence for the static site.
+  // NOTE: This is device/browser-specific. To share reviews across users, use the Flask site.
+  const stored = localStorage.getItem("cc-data");
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -312,16 +429,19 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(
-    "bsbb-data",
+    "cc-data",
     JSON.stringify({ businesses: state.businesses, favorites: Array.from(state.favorites) })
   );
 }
 
 function averageRating(biz) {
-  // Use Google rating if available, otherwise calculate from reviews
-  if (biz.rating !== undefined) {
-    return biz.rating;
-  }
+  // IMPORTANT:
+  // Some sources (like OpenStreetMap) don't provide ratings.
+  // In those cases we should compute the average from user reviews.
+  //
+  // We ONLY treat `biz.rating` as a source-provided rating if it's a positive number.
+  // This prevents the common bug where `rating: 0` blocks the review-based average.
+  if (typeof biz.rating === "number" && biz.rating > 0) return biz.rating;
   if (!biz.reviews || !biz.reviews.length) return 0;
   return biz.reviews.reduce((a, r) => a + (r.rating || 0), 0) / biz.reviews.length;
 }
@@ -596,13 +716,26 @@ function openDetails(id) {
       return;
     }
     if (!biz.reviews) biz.reviews = [];
-    biz.reviews.push({
+    const newReview = {
       user_name: name,
       rating,
       comment,
       date: new Date().toISOString().split("T")[0]
-    });
+    };
+    biz.reviews.push(newReview);
     saveState();
+    // Attempt to save to shared backend (if configured).
+    postSharedReview({
+      business_id: biz.id,
+      user_name: newReview.user_name,
+      rating: newReview.rating,
+      comment: newReview.comment
+    }).then(result => {
+      if (result && result.ok === false) {
+        // Still fine: localStorage keeps the review, just not shared.
+        console.warn("Shared review save failed:", result.error);
+      }
+    });
     openDetails(biz.id);
     render();
   });
@@ -678,6 +811,24 @@ function bindEvents() {
     render();
   });
 
+  // Shared Reviews settings (backend URL)
+  const settingsBtn = qs("settingsBtn");
+  if (settingsBtn) {
+    settingsBtn.addEventListener("click", async () => {
+      const current = getBackendBaseUrl();
+      const next = prompt(
+        "Shared Reviews backend URL (example: https://your-backend.onrender.com)\n\nLeave blank to disable shared reviews.",
+        current
+      );
+      if (next === null) return;
+      setBackendBaseUrl(next);
+      showBackendStatus();
+      await syncSharedReviewsIntoState();
+      saveState();
+      render();
+    });
+  }
+
   qs("favoritesBtn").addEventListener("click", showFavorites);
   qs("addBtn").addEventListener("click", addBusinessFlow);
   qs("modal").addEventListener("click", e => {
@@ -700,6 +851,7 @@ function init() {
   els.list = qs("businessList");
   // Hide API key banner - not needed with OpenStreetMap
   qs("apiKeyBanner").style.display = "none";
+  showBackendStatus();
   loadState();
   buildCategories();
   bindEvents();

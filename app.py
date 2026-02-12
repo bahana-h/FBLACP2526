@@ -73,6 +73,60 @@ business_boost = BusinessBoost()
 # Set with: export FOURSQUARE_API_KEY="your_key_here"
 FOURSQUARE_API_KEY = os.getenv("FOURSQUARE_API_KEY")
 
+# =============================================================================
+# Shared Reviews API (for GitHub Pages static site)
+# =============================================================================
+#
+# GitHub Pages is static hosting only, so it cannot share data between users.
+# To support "shared reviews", we expose a tiny JSON API here and enable CORS
+# so the static site can read/write reviews to this server.
+#
+# IMPORTANT DEPLOY NOTE:
+# - You must deploy this Flask app somewhere public (Render/Fly/Railway/etc.)
+# - Then configure the GitHub Pages UI to point at that backend URL.
+#
+# DATA MODEL:
+# - shared_reviews.json stores a mapping:
+#     { "<external_business_id>": [ {user_name, rating, comment, verified, date}, ... ] }
+#
+# - external_business_id is the stable ID used by the static site (OSM element IDs, etc.)
+# - This intentionally supports businesses that do NOT exist in business_data.json.
+#
+SHARED_REVIEWS_FILE = os.getenv("SHARED_REVIEWS_FILE", "shared_reviews.json")
+
+
+def _corsify(response):
+    """
+    Add CORS headers so GitHub Pages can call this API from a different origin.
+
+    SECURITY TRADEOFF:
+    - We allow any origin ("*") for simplicity in a school project/demo.
+    - For production, lock this down to your exact site origin, e.g.:
+      https://bahana-h.github.io
+    """
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
+
+
+def load_shared_reviews() -> Dict[str, List[Dict]]:
+    """Load shared reviews mapping from disk (or return empty mapping)."""
+    if not os.path.exists(SHARED_REVIEWS_FILE):
+        return {}
+    try:
+        with open(SHARED_REVIEWS_FILE, "r") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_shared_reviews(data: Dict[str, List[Dict]]) -> None:
+    """Persist shared reviews mapping to disk."""
+    with open(SHARED_REVIEWS_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
 
 @app.route('/')
 def index():
@@ -830,6 +884,101 @@ def foursquare_places():
     # Parse and return JSON response
     data = resp.json()
     return jsonify(data)
+
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    """Simple health check endpoint for the static site."""
+    resp = jsonify({"ok": True, "service": "chrysalis-connect-backend"})
+    return _corsify(resp)
+
+
+@app.route("/api/shared-reviews/bulk", methods=["POST", "OPTIONS"])
+def shared_reviews_bulk():
+    """
+    Fetch shared reviews for many business IDs in one request.
+
+    Request JSON:
+      { "business_ids": ["id1", "id2", ...] }
+
+    Response JSON:
+      { "reviews_by_id": { "id1": [...], "id2": [...] } }
+    """
+    if request.method == "OPTIONS":
+        return _corsify(jsonify({"ok": True}))
+
+    payload = request.get_json(silent=True) or {}
+    business_ids = payload.get("business_ids", [])
+    if not isinstance(business_ids, list) or not all(isinstance(x, str) for x in business_ids):
+        return _corsify(jsonify({"error": "business_ids must be a list of strings."})), 400
+
+    data = load_shared_reviews()
+    out = {bid: data.get(bid, []) for bid in business_ids}
+    return _corsify(jsonify({"reviews_by_id": out}))
+
+
+@app.route("/api/shared-reviews", methods=["POST", "OPTIONS"])
+def shared_reviews_add():
+    """
+    Add a shared review for an external business ID.
+
+    Request JSON:
+      {
+        "business_id": "external-id",
+        "user_name": "Hannah",
+        "rating": 5,
+        "comment": "Great!",
+        "verified": true
+      }
+    """
+    if request.method == "OPTIONS":
+        return _corsify(jsonify({"ok": True}))
+
+    payload = request.get_json(silent=True) or {}
+    business_id = payload.get("business_id")
+    user_name = (payload.get("user_name") or "").strip()
+    rating = payload.get("rating")
+    comment = (payload.get("comment") or "").strip()
+    verified = bool(payload.get("verified", True))
+
+    # Syntactical + semantic validation using existing validators.
+    if not business_id or not isinstance(business_id, str):
+        return _corsify(jsonify({"error": "business_id is required."})), 400
+
+    is_valid, err = validate_username(user_name)
+    if not is_valid:
+        return _corsify(jsonify({"error": err or "Invalid user_name."})), 400
+
+    # Accept either numeric or string rating from clients.
+    try:
+        rating_str = str(rating)
+    except Exception:
+        rating_str = ""
+    ok, rating_int, err = validate_rating(rating_str)
+    if not ok:
+        return _corsify(jsonify({"error": err or "Invalid rating."})), 400
+
+    is_valid, err = validate_comment(comment)
+    if not is_valid:
+        return _corsify(jsonify({"error": err or "Invalid comment."})), 400
+
+    data = load_shared_reviews()
+    reviews = data.get(business_id, [])
+    if not isinstance(reviews, list):
+        reviews = []
+
+    review = {
+        "user_name": user_name,
+        "rating": rating_int,
+        "comment": comment,
+        "verified": verified,
+        "date": datetime.now().isoformat(),
+    }
+    reviews.append(review)
+    data[business_id] = reviews
+    save_shared_reviews(data)
+
+    return _corsify(jsonify({"ok": True, "review": review, "review_count": len(reviews)}))
 
 
 @app.errorhandler(404)
