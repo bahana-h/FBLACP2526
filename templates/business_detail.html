@@ -162,6 +162,39 @@
                 </div>
             </div>
         </div>
+
+        {% if similar_businesses %}
+            <div class="similar-businesses-section">
+                <h2><i class="fas fa-lightbulb"></i> Similar Businesses</h2>
+                <p class="section-description">Discover other businesses you might like based on this one.</p>
+                <div class="business-grid">
+                    {% for similar in similar_businesses %}
+                        <div class="business-card">
+                            <div class="business-card-header">
+                                <h3><a href="{{ url_for('business_detail', business_id=similar.id) }}">{{ similar.name }}</a></h3>
+                                <span class="category-badge category-{{ similar.category }}">{{ similar.category.title() }}</span>
+                            </div>
+                            <p class="business-address"><i class="fas fa-map-marker-alt"></i> {{ similar.address }}</p>
+                            {% if similar.get_review_count() > 0 %}
+                                <div class="business-rating">
+                                    <div class="stars">
+                                        {% set avg = similar.get_average_rating() %}
+                                        {% for i in range(5) %}
+                                            <i class="fas fa-star {% if i < avg|int %}star-filled{% else %}star-empty{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <span class="rating-text">{{ "%.1f"|format(avg) }} ({{ similar.get_review_count() }} reviews)</span>
+                                </div>
+                            {% endif %}
+                            {% if similar.description %}
+                                <p class="business-description">{{ similar.description[:100] }}{% if similar.description|length > 100 %}...{% endif %}</p>
+                            {% endif %}
+                            <a href="{{ url_for('business_detail', business_id=similar.id) }}" class="btn btn-outline">View Details</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
