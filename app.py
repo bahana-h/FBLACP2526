@@ -77,7 +77,12 @@ FOURSQUARE_API_KEY = os.getenv("FOURSQUARE_API_KEY")
 @app.route('/')
 def index():
     """
-    Home page route - displays all businesses with filtering and sorting.
+    Landing page route (Chrysalis Connect).
+
+    UX GOAL:
+    - Provide a visually engaging first impression (3D chrysalis → butterfly)
+    - Explain the product in one screen
+    - Offer clear calls-to-action into the app
     
     QUERY PARAMETERS:
     - category: Filter by business category (food/retail/services)
@@ -93,16 +98,24 @@ def index():
     Returns:
         Rendered HTML template with business listings
     """
+    username = session.get('username', '')
+    return render_template("landing.html", username=username)
+
+
+@app.route('/directory')
+def directory():
+    """
+    Directory page route - displays all businesses with filtering and sorting.
     # Extract query parameters from URL
     # Query parameters allow for shareable, bookmarkable filtered views
     category = request.args.get('category', '').strip()
     sort_by = request.args.get('sort', 'name').strip()
     search = request.args.get('search', '').strip()
-    
+
     # Start with all businesses
     # List data structure maintains order and allows filtering
     businesses = business_boost.businesses
-    
+
     # Apply category filter if specified
     # Filtering reduces dataset size for better performance
     if category:
@@ -113,7 +126,7 @@ def index():
         else:
             # Invalid category - ignore filter and show all
             flash(f'Invalid category filter: {error}', 'warning')
-    
+
     # Apply text search filter
     # Case-insensitive search across multiple fields
     if search:
@@ -121,18 +134,18 @@ def index():
         if len(search) > 100:
             flash('Search query is too long (maximum 100 characters).', 'warning')
             search = search[:100]
-        
+
         # Perform case-insensitive search
-        # Searches name, category, and address for comprehensive results
+        # Searches name, category, address, and description for comprehensive results
         search_lower = search.lower()
         businesses = [
             b for b in businesses
-            if (search_lower in b.name.lower() or 
-                search_lower in b.category.lower() or 
-                search_lower in b.address.lower() or
-                search_lower in (b.description or '').lower())
+            if (search_lower in b.name.lower()
+                or search_lower in b.category.lower()
+                or search_lower in b.address.lower()
+                or search_lower in (b.description or '').lower())
         ]
-    
+
     # Apply sorting
     # Different sort orders serve different user needs
     if sort_by == 'rating':
@@ -149,25 +162,24 @@ def index():
         # Default: Alphabetical by name
         # Predictable ordering for users browsing
         businesses = sorted(businesses, key=lambda b: b.name)
-    
+
     # Get all available categories for dropdown menu
-    # Set data structure ensures uniqueness
     categories = business_boost.get_all_categories()
-    
+
     # Get username from session for personalized features
-    # Session stores user state across requests
     username = session.get('username', '')
-    
+
     # Render template with all data
-    # Template engine (Jinja2) handles HTML generation
-    return render_template('index.html', 
-                         businesses=businesses, 
-                         categories=categories,
-                         current_category=category,
-                         current_sort=sort_by,
-                         search_query=search,
-                         username=username,
-                         page_title=None)
+    return render_template(
+        'index.html',
+        businesses=businesses,
+        categories=categories,
+        current_category=category,
+        current_sort=sort_by,
+        search_query=search,
+        username=username,
+        page_title=None,
+    )
 
 
 @app.route('/business/<business_id>')
