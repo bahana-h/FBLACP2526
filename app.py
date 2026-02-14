@@ -81,18 +81,20 @@ FOURSQUARE_API_KEY = os.getenv("FOURSQUARE_API_KEY")
 # To support "shared reviews", we expose a tiny JSON API here and enable CORS
 # so the static site can read/write reviews to this server.
 #
-# IMPORTANT DEPLOY NOTE:
-# - You must deploy this Flask app somewhere public (Render/Fly/Railway/etc.)
-# - Then configure the GitHub Pages UI to point at that backend URL.
+# PERSISTENCE (lasting reviews):
+# - Set SUPABASE_URL and SUPABASE_KEY (or SUPABASE_ANON_KEY) to store reviews in Supabase.
+# - Deploy the Flask app to Render (or similar); without a DB, the filesystem is ephemeral.
 #
 # DATA MODEL:
-# - shared_reviews.json stores a mapping:
-#     { "<external_business_id>": [ {user_name, rating, comment, verified, date}, ... ] }
+# - Supabase table "reviews" or file shared_reviews.json:
+#     business_id -> [ {user_name, rating, comment, verified, date}, ... ]
 #
-# - external_business_id is the stable ID used by the static site (OSM element IDs, etc.)
-# - This intentionally supports businesses that do NOT exist in business_data.json.
-#
-SHARED_REVIEWS_FILE = os.getenv("SHARED_REVIEWS_FILE", "shared_reviews.json")
+from reviews_store import (
+    get_reviews,
+    get_reviews_bulk,
+    add_review as store_add_review,
+    is_supabase_configured,
+)
 
 
 def _corsify(response):
@@ -108,24 +110,6 @@ def _corsify(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
-
-
-def load_shared_reviews() -> Dict[str, List[Dict]]:
-    """Load shared reviews mapping from disk (or return empty mapping)."""
-    if not os.path.exists(SHARED_REVIEWS_FILE):
-        return {}
-    try:
-        with open(SHARED_REVIEWS_FILE, "r") as f:
-            data = json.load(f)
-            return data if isinstance(data, dict) else {}
-    except Exception:
-        return {}
-
-
-def save_shared_reviews(data: Dict[str, List[Dict]]) -> None:
-    """Persist shared reviews mapping to disk."""
-    with open(SHARED_REVIEWS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
 
 
 @app.route('/')
@@ -160,6 +144,7 @@ def index():
 def directory():
     """
     Directory page route - displays all businesses with filtering and sorting.
+    """
     # Extract query parameters from URL
     # Query parameters allow for shareable, bookmarkable filtered views
     category = request.args.get('category', '').strip()
@@ -216,6 +201,12 @@ def directory():
         # Default: Alphabetical by name
         # Predictable ordering for users browsing
         businesses = sorted(businesses, key=lambda b: b.name)
+
+    # When using Supabase for reviews, overlay store reviews so listing shows correct counts/ratings
+    if is_supabase_configured() and businesses:
+        reviews_by_id = get_reviews_bulk([b.id for b in businesses])
+        for b in businesses:
+            b.reviews = reviews_by_id.get(b.id, [])
 
     # Get all available categories for dropdown menu
     categories = business_boost.get_all_categories()
@@ -283,7 +274,11 @@ def business_detail(business_id):
     # Get similar businesses for discovery
     # Intelligent feature: Helps users find related businesses
     similar_businesses = get_similar_businesses(business, business_boost, limit=3)
-    
+
+    # Reviews: use persistent store (Supabase) when configured, else in-memory from business_data.json
+    if is_supabase_configured():
+        business.reviews = get_reviews(business_id)
+
     # Render detail template
     return render_template('business_detail.html', 
                          business=business, 
@@ -563,10 +558,12 @@ def add_review():
         flash(error or 'Comment is required and must be meaningful.', 'error')
         return redirect(url_for('business_detail', business_id=business_id))
     
-    # Add review to business
-    # BusinessBoost handles validation and persistence
+    # Add review: use persistent store (Supabase) when configured, else BusinessBoost (file)
     try:
-        if business_boost.add_review(business_id, user_name, rating_int, comment):
+        if is_supabase_configured():
+            store_add_review(business_id, user_name, rating_int, comment, verified=True)
+            flash('Review added successfully!', 'success')
+        elif business_boost.add_review(business_id, user_name, rating_int, comment):
             flash('Review added successfully!', 'success')
         else:
             flash('Failed to add review. Business may not exist.', 'error')
@@ -912,8 +909,7 @@ def shared_reviews_bulk():
     if not isinstance(business_ids, list) or not all(isinstance(x, str) for x in business_ids):
         return _corsify(jsonify({"error": "business_ids must be a list of strings."})), 400
 
-    data = load_shared_reviews()
-    out = {bid: data.get(bid, []) for bid in business_ids}
+    out = get_reviews_bulk(business_ids)
     return _corsify(jsonify({"reviews_by_id": out}))
 
 
@@ -962,22 +958,8 @@ def shared_reviews_add():
     if not is_valid:
         return _corsify(jsonify({"error": err or "Invalid comment."})), 400
 
-    data = load_shared_reviews()
-    reviews = data.get(business_id, [])
-    if not isinstance(reviews, list):
-        reviews = []
-
-    review = {
-        "user_name": user_name,
-        "rating": rating_int,
-        "comment": comment,
-        "verified": verified,
-        "date": datetime.now().isoformat(),
-    }
-    reviews.append(review)
-    data[business_id] = reviews
-    save_shared_reviews(data)
-
+    review = store_add_review(business_id, user_name, rating_int, comment, verified)
+    reviews = get_reviews(business_id)
     return _corsify(jsonify({"ok": True, "review": review, "review_count": len(reviews)}))
 
 
