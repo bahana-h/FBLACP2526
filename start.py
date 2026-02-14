@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Byte-Sized Business Boost - Auto-start Script
+Chrysalis Connect - Auto-start Script
 Automatically installs dependencies and starts the web server.
 """
 
@@ -44,7 +44,7 @@ def install_dependencies():
 def start_server():
     """Start the Flask development server."""
     print("\n" + "="*60)
-    print("🌟 BYTE-SIZED BUSINESS BOOST")
+    print("🌟 CHRYSALIS CONNECT")
     print("="*60)
     print("\n🚀 Starting web server...")
     print("📍 Open your browser to: http://localhost:5000")

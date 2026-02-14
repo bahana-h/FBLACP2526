@@ -84,9 +84,10 @@ function mergeLocalReviewsInto(newBusinesses) {
 // If no backend is configured, reviews still work locally (localStorage only).
 //
 const BACKEND_URL_KEY = "cc-backend-url";
+const DEFAULT_BACKEND_URL = "https://chrysalis-connect.onrender.com";
 
 function getBackendBaseUrl() {
-  const url = (localStorage.getItem(BACKEND_URL_KEY) || "").trim();
+  const url = (localStorage.getItem(BACKEND_URL_KEY) || DEFAULT_BACKEND_URL).trim();
   return url.replace(/\/+$/, "");
 }
 

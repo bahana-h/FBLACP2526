@@ -42,7 +42,8 @@ class Business:
     """
     
     def __init__(self, name: str, category: str, address: str, phone: str = "", 
-                 description: str = "", deals: List[Dict] = None):
+                 description: str = "", deals: List[Dict] = None,
+                 latitude: Optional[float] = None, longitude: Optional[float] = None):
         """
         Initialize a new Business instance.
         
@@ -78,6 +79,10 @@ class Business:
         # Reviews list - initialized empty, populated by user interactions
         # Using list allows for multiple reviews per business
         self.reviews = []
+        
+        # Optional coordinates for map display (latitude, longitude)
+        self.latitude = latitude
+        self.longitude = longitude
         
         # Timestamp for when business was created
         # ISO format ensures consistent date representation across systems
@@ -211,6 +216,8 @@ class Business:
             "description": self.description,
             "deals": self.deals,
             "reviews": self.reviews,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
             "created_at": self.created_at
         }
     
@@ -243,7 +250,9 @@ class Business:
             address=data["address"],
             phone=data.get("phone", ""),  # Default to empty string if missing
             description=data.get("description", ""),  # Default to empty string
-            deals=data.get("deals", [])  # Default to empty list
+            deals=data.get("deals", []),  # Default to empty list
+            latitude=data.get("latitude"),
+            longitude=data.get("longitude")
         )
         
         # Restore instance-specific fields that aren't set in __init__
@@ -386,6 +395,7 @@ class BusinessBoost:
         """
         # Create sample businesses across different categories
         # This demonstrates the application's capabilities
+        # Sample businesses with approximate coordinates (San Francisco area) for map display
         sample_businesses = [
             Business(
                 name="Joe's Coffee House",
@@ -393,7 +403,8 @@ class BusinessBoost:
                 address="123 Main St, Downtown",
                 phone="555-0101",
                 description="Cozy local coffee shop with artisanal brews and fresh pastries. Family-owned since 2010.",
-                deals=[{"title": "Buy 2 Get 1 Free", "description": "Any coffee drinks", "expires": "2024-12-31"}]
+                deals=[{"title": "Buy 2 Get 1 Free", "description": "Any coffee drinks", "expires": "2024-12-31"}],
+                latitude=37.785, longitude=-122.409
             ),
             Business(
                 name="Green Thumb Garden Center",
@@ -401,7 +412,8 @@ class BusinessBoost:
                 address="456 Oak Ave, Garden District",
                 phone="555-0102",
                 description="Family-owned garden center with expert advice and quality plants. Your one-stop shop for all gardening needs.",
-                deals=[{"title": "20% Off All Seeds", "description": "Valid this month", "expires": "2024-12-31"}]
+                deals=[{"title": "20% Off All Seeds", "description": "Valid this month", "expires": "2024-12-31"}],
+                latitude=37.772, longitude=-122.435
             ),
             Business(
                 name="Quick Fix Auto Repair",
@@ -409,7 +421,8 @@ class BusinessBoost:
                 address="789 Industrial Blvd",
                 phone="555-0103",
                 description="Honest and reliable auto repair service. We've been serving the community for over 20 years.",
-                deals=[{"title": "Free Oil Change", "description": "With any major service", "expires": "2024-12-31"}]
+                deals=[{"title": "Free Oil Change", "description": "With any major service", "expires": "2024-12-31"}],
+                latitude=37.762, longitude=-122.400
             ),
             Business(
                 name="Mama's Italian Kitchen",
@@ -417,7 +430,8 @@ class BusinessBoost:
                 address="321 Elm St, Little Italy",
                 phone="555-0104",
                 description="Authentic Italian cuisine made with love. Traditional recipes passed down through generations.",
-                deals=[{"title": "10% Off Dinner", "description": "Monday-Thursday", "expires": "2024-12-31"}]
+                deals=[{"title": "10% Off Dinner", "description": "Monday-Thursday", "expires": "2024-12-31"}],
+                latitude=37.798, longitude=-122.408
             ),
             Business(
                 name="The Book Nook",
@@ -425,7 +439,8 @@ class BusinessBoost:
                 address="654 Pine St, Arts Quarter",
                 phone="555-0105",
                 description="Independent bookstore with curated selection of new and used books. Weekly book clubs and author events.",
-                deals=[{"title": "Buy 2 Get 1 Free", "description": "All paperback books", "expires": "2024-12-31"}]
+                deals=[{"title": "Buy 2 Get 1 Free", "description": "All paperback books", "expires": "2024-12-31"}],
+                latitude=37.789, longitude=-122.428
             ),
         ]
         

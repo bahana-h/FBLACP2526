@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Byte-Sized Business Boost - Web Application
+Chrysalis Connect - Web Application
 
 A Flask-based web application for discovering and supporting local businesses.
 This application demonstrates modern web development practices including:
@@ -31,12 +31,8 @@ SECURITY FEATURES:
 """
 
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
-import json
 import os
 import random
-import string
-from datetime import datetime
-from typing import Dict, List, Optional
 import requests
 
 # Import business models and utilities
@@ -225,6 +221,35 @@ def directory():
         username=username,
         page_title=None,
     )
+
+
+@app.route('/map')
+def map_view():
+    """
+    Interactive map showing all local businesses with coordinates.
+    Uses Leaflet + OpenStreetMap. Businesses without lat/lng are excluded.
+    """
+    businesses_with_coords = [
+        b for b in business_boost.businesses
+        if getattr(b, 'latitude', None) is not None and getattr(b, 'longitude', None) is not None
+    ]
+    # Build markers data for template
+    markers = [
+        {
+            "id": b.id,
+            "name": b.name,
+            "address": b.address,
+            "category": b.category,
+            "url": url_for('business_detail', business_id=b.id),
+            "lat": b.latitude,
+            "lng": b.longitude,
+            "rating": b.get_average_rating(),
+            "review_count": b.get_review_count(),
+        }
+        for b in businesses_with_coords
+    ]
+    username = session.get('username', '')
+    return render_template('map.html', markers=markers, username=username)
 
 
 @app.route('/business/<business_id>')

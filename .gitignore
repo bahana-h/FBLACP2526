@@ -1,5 +1,6 @@
-# Data files
+# Data files (generated at runtime)
 business_data.json
+shared_reviews.json
 
 # Python
 __pycache__/
