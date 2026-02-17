@@ -143,7 +143,7 @@ def directory():
     """
     # Extract query parameters from URL
     # Query parameters allow for shareable, bookmarkable filtered views
-    """
+    
     category = request.args.get('category', '').strip()
     sort_by = request.args.get('sort', 'name').strip()
     search = request.args.get('search', '').strip()
