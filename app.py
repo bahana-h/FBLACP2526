@@ -37,7 +37,7 @@ import random
 import string
 from datetime import datetime
 from typing import Dict, List, Optional
-import requests
+#import requests
 
 # Import business models and utilities
 from models import Business, BusinessBoost
@@ -162,6 +162,7 @@ def directory():
     Directory page route - displays all businesses with filtering and sorting.
     # Extract query parameters from URL
     # Query parameters allow for shareable, bookmarkable filtered views
+    """
     category = request.args.get('category', '').strip()
     sort_by = request.args.get('sort', 'name').strip()
     search = request.args.get('search', '').strip()
