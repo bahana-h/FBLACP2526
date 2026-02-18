@@ -913,13 +913,6 @@ function bindEvents() {
     render();
   });
 
-  const navExplore = qs("navExplore");
-  if (navExplore) {
-    navExplore.addEventListener("click", () => {
-      state.view = "";
-      render();
-    });
-  }
   const navRec = qs("navRecommendations");
   if (navRec) navRec.addEventListener("click", showRecommendations);
 
