@@ -155,10 +155,11 @@ async function syncSharedReviewsIntoState() {
     if (!Array.isArray(shared) || shared.length === 0) continue;
 
     biz.reviews = Array.isArray(biz.reviews) ? biz.reviews : [];
-    const seen = new Set(biz.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`));
+    // Dedupe by content only (backend may use different date format than client)
+    const seen = new Set(biz.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}`));
 
     for (const r of shared) {
-      const key = `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`;
+      const key = `${r.user_name}|${r.rating}|${r.comment}`;
       if (!seen.has(key)) {
         biz.reviews.push(r);
         seen.add(key);
@@ -981,6 +982,12 @@ function init() {
   buildCategories();
   bindEvents();
   render();
+
+  // Sync shared reviews from backend on load (so cross-user reviews appear without re-search)
+  syncSharedReviewsIntoState().then(() => {
+    saveState();
+    render();
+  });
 
   const landingBtn = qs("landingScrollBtn");
   if (landingBtn) {
