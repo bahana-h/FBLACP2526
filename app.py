@@ -162,6 +162,7 @@ def directory():
     Directory page route - displays all businesses with filtering and sorting.
     # Extract query parameters from URL
     # Query parameters allow for shareable, bookmarkable filtered views
+    """
     category = request.args.get('category', '').strip()
     sort_by = request.args.get('sort', 'name').strip()
     search = request.args.get('search', '').strip()
@@ -1017,17 +1018,6 @@ def internal_error(error):
 if __name__ == '__main__':
     """
     Application entry point.
-    
-    DEVELOPMENT MODE:
-    - debug=True enables auto-reload on code changes
-    - Shows detailed error pages for debugging
-    - host='0.0.0.0' allows access from other devices on network
-    
-    PRODUCTION DEPLOYMENT:
-    - Use production WSGI server (e.g., Gunicorn, uWSGI)
-    - Set debug=False
-    - Configure proper logging
-    - Use environment variables for configuration
     """
     # Run Flask development server
     # In production, use: gunicorn app:app
