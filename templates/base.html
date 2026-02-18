@@ -17,7 +17,6 @@
             <div class="nav-links">
                 <a href="{{ url_for('index') }}"><i class="fas fa-house"></i> Home</a>
                 <a href="{{ url_for('directory') }}"><i class="fas fa-compass"></i> Explore</a>
-                <a href="{{ url_for('map_view') }}"><i class="fas fa-map-marked-alt"></i> Map</a>
                 <div class="nav-dropdown">
                     <a href="#" class="nav-dropdown-toggle"><i class="fas fa-filter"></i> Browse <i class="fas fa-chevron-down"></i></a>
                     <div class="nav-dropdown-menu">
@@ -28,9 +27,6 @@
                     </div>
                 </div>
                 <a href="{{ url_for('add_business') }}"><i class="fas fa-plus-circle"></i> Add Business</a>
-                <button type="button" class="nav-help-btn" id="helpTrigger" aria-label="Open help menu">
-                    <i class="fas fa-circle-question"></i> Help
-                </button>
                 {% if username %}
                     <span class="username"><i class="fas fa-user"></i> {{ username }}</span>
                 {% else %}
@@ -65,47 +61,6 @@
             <p>&copy; 2026 Chrysalis Connect. Support Local Businesses! <i class="fas fa-heart"></i></p>
         </div>
     </footer>
-
-    <!-- Help Modal -->
-    <div class="help-modal" id="helpModal" role="dialog" aria-labelledby="helpTitle" aria-hidden="true">
-        <div class="help-modal-backdrop" id="helpBackdrop"></div>
-        <div class="help-modal-content">
-            <div class="help-modal-header">
-                <h2 id="helpTitle"><i class="fas fa-circle-question"></i> How to Use Chrysalis Connect</h2>
-                <button type="button" class="help-modal-close" id="helpClose" aria-label="Close help">&times;</button>
-            </div>
-            <div class="help-modal-body">
-                <section class="help-section">
-                    <h3><i class="fas fa-compass"></i> Explore Businesses</h3>
-                    <p>Click <strong>Explore</strong> to browse all local businesses. Use the search bar, category filter, and sort options to find what you need. Click any business card to see full details, reviews, and deals.</p>
-                </section>
-                <section class="help-section">
-                    <h3><i class="fas fa-user"></i> Enter Your Name</h3>
-                    <p>Enter your name in the top-right nav and click <strong>Go</strong> to unlock favorites, reviews, and personalized recommendations. Your name is stored in your session only.</p>
-                </section>
-                <section class="help-section">
-                    <h3><i class="fas fa-heart"></i> Save Favorites</h3>
-                    <p>On any business detail page, click <strong>Add to Favorites</strong> to save it to your list. View your favorites anytime under <strong>Browse → My Favorites</strong>.</p>
-                </section>
-                <section class="help-section">
-                    <h3><i class="fas fa-star"></i> Leave Reviews</h3>
-                    <p>Open a business and scroll to <strong>Leave a Review</strong>. Choose a rating (1–5 stars), write your comment, and solve the quick math verification. Reviews are saved permanently.</p>
-                </section>
-                <section class="help-section">
-                    <h3><i class="fas fa-plus-circle"></i> Add a Business</h3>
-                    <p>Know a local business that isn&rsquo;t listed? Click <strong>Add Business</strong>, fill in the details, and solve the verification. New businesses appear in the directory right away.</p>
-                </section>
-                <section class="help-section">
-                    <h3><i class="fas fa-lightbulb"></i> Recommendations</h3>
-                    <p>Under <strong>Browse → Recommendations</strong>, get personalized picks based on your favorite businesses. The more you favorite, the smarter the suggestions.</p>
-                </section>
-                <section class="help-section">
-                    <h3><i class="fas fa-map-marked-alt"></i> Map</h3>
-                    <p>Click <strong>Map</strong> in the nav to see all local businesses on an interactive map. Click a marker to view details and go to the business page. Businesses with coordinates are shown on the map.</p>
-                </section>
-            </div>
-        </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}

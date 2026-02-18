@@ -1,38 +1,6 @@
-// Chrysalis Connect - JavaScript
+// Byte-Sized Business Boost - JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Help modal
-    const helpModal = document.getElementById('helpModal');
-    const helpTrigger = document.getElementById('helpTrigger');
-    const helpClose = document.getElementById('helpClose');
-    const helpBackdrop = document.getElementById('helpBackdrop');
-
-    function openHelp() {
-        if (helpModal) {
-            helpModal.classList.add('is-open');
-            helpModal.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    function closeHelp() {
-        if (helpModal) {
-            helpModal.classList.remove('is-open');
-            helpModal.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-        }
-    }
-
-    if (helpTrigger) helpTrigger.addEventListener('click', openHelp);
-    if (helpClose) helpClose.addEventListener('click', closeHelp);
-    if (helpBackdrop) helpBackdrop.addEventListener('click', closeHelp);
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && helpModal && helpModal.classList.contains('is-open')) {
-            closeHelp();
-        }
-    });
-
     // Auto-hide flash messages after 5 seconds
     const flashMessages = document.querySelectorAll('.flash');
     flashMessages.forEach(function(flash) {

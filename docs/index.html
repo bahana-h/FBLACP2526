@@ -12,11 +12,15 @@
     <div class="container nav-container">
       <div class="nav-brand">
         <i class="fas fa-butterfly"></i>
-        <span>Chrysalis Connect</span>
+        <a href="#landing" class="nav-brand-link">Chrysalis Connect</a>
       </div>
       <div class="nav-actions">
-        <button class="btn ghost" id="settingsBtn"><i class="fas fa-gear"></i> Shared Reviews</button>
+        <a href="#directory" class="btn ghost" id="navExplore"><i class="fas fa-compass"></i> Explore</a>
+        <button class="btn ghost" id="navTopRated"><i class="fas fa-star"></i> Top Rated</button>
+        <button class="btn ghost" id="navMostReviewed"><i class="fas fa-comments"></i> Most Reviewed</button>
+        <button class="btn ghost" id="navRecommendations"><i class="fas fa-lightbulb"></i> Recommendations</button>
         <button class="btn ghost" id="favoritesBtn"><i class="fas fa-heart"></i> Favorites</button>
+        <button class="btn ghost" id="settingsBtn"><i class="fas fa-gear"></i> Shared Reviews</button>
         <button class="btn primary" id="addBtn"><i class="fas fa-plus-circle"></i> Add Business</button>
       </div>
     </div>
@@ -130,6 +134,7 @@
       <div class="category-pills" id="categoryPills"></div>
     </section>
 
+    <h2 class="view-title" id="viewTitle" aria-live="polite"></h2>
     <section id="businessList" class="grid"></section>
   </main>
 
@@ -163,7 +168,7 @@
     <div class="deal-pill"><i class="fas fa-tag"></i> <span class="deal-text"></span></div>
   </template>
 
-  <script src="assets/app.js?v=4"></script>
+  <script src="assets/app.js?v=5"></script>
 </body>
 </html>
 

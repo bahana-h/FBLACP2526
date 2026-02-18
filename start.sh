@@ -1,7 +1,7 @@
 #!/bin/bash
-# Chrysalis Connect - Auto-start Script
+# Byte-Sized Business Boost - Auto-start Script
 
-echo "🌟 Starting Chrysalis Connect..."
+echo "🌟 Starting Byte-Sized Business Boost..."
 echo ""
 
 # Check if Python 3 is installed

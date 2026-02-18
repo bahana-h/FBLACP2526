@@ -23,7 +23,8 @@ const state = {
   favorites: new Set(),
   filters: { search: "", category: "", sort: "name" },
   currentLocation: null,
-  loading: false
+  loading: false,
+  view: "" // "", "favorites", "recommendations"
 };
 
 const els = {};
@@ -84,10 +85,9 @@ function mergeLocalReviewsInto(newBusinesses) {
 // If no backend is configured, reviews still work locally (localStorage only).
 //
 const BACKEND_URL_KEY = "cc-backend-url";
-const DEFAULT_BACKEND_URL = "https://chrysalis-connect.onrender.com";
 
 function getBackendBaseUrl() {
-  const url = (localStorage.getItem(BACKEND_URL_KEY) || DEFAULT_BACKEND_URL).trim();
+  const url = (localStorage.getItem(BACKEND_URL_KEY) || "").trim();
   return url.replace(/\/+$/, "");
 }
 
@@ -567,17 +567,52 @@ function filteredBusinesses() {
   return list;
 }
 
+function getSimilarBusinesses(biz, limit) {
+  limit = limit || 3;
+  return state.businesses
+    .filter(b => b.id !== biz.id && b.category === biz.category)
+    .sort((a, b) => averageRating(b) - averageRating(a))
+    .slice(0, limit);
+}
+
+function setViewTitle(text) {
+  const el = qs("viewTitle");
+  if (!el) return;
+  el.textContent = text || "";
+  el.style.display = text ? "block" : "none";
+}
+
 function render() {
   renderStats();
   updateFiltersUI();
   const list = qs("businessList");
   list.innerHTML = "";
-  
+
+  if (state.view === "favorites") {
+    setViewTitle("Favorites");
+    const favIds = state.favorites;
+    const data = state.businesses.filter(b => favIds.has(b.id));
+    if (!data.length) {
+      list.innerHTML = `<div class="empty">No favorites yet. Click the heart on a business to add it.</div>`;
+      return;
+    }
+    data.forEach(biz => list.appendChild(cardForBusiness(biz)));
+    return;
+  }
+
+  if (state.view === "recommendations") {
+    setViewTitle("Recommendations — top rated and trending");
+    state.filters.sort = "rating";
+    updateFiltersUI();
+  } else {
+    setViewTitle("");
+  }
+
   if (state.loading) {
     list.innerHTML = `<div class="empty"><i class="fas fa-spinner fa-spin"></i> Loading businesses...</div>`;
     return;
   }
-  
+
   const data = filteredBusinesses();
   if (!data.length) {
     list.innerHTML = `<div class="empty">No businesses found. Try another search or location, or add businesses manually!</div>`;
@@ -635,6 +670,7 @@ function cardForBusiness(biz) {
 function openDetails(id) {
   const biz = state.businesses.find(b => b.id === id);
   if (!biz) return;
+  const similar = getSimilarBusinesses(biz, 3);
   const modal = qs("modal");
   const content = qs("modalContent");
   content.innerHTML = `
@@ -671,6 +707,7 @@ function openDetails(id) {
         )
         .join("") || ""}
     </div>
+    ${similar.length ? `<h3>Similar businesses</h3><div class="similar-list" id="similarList">${similar.map(s => `<button type="button" class="similar-item" data-id="${s.id}"><strong>${s.name}</strong> · ${averageRating(s).toFixed(1)} ★ (${totalReviews(s)} reviews)</button>`).join("")}</div>` : ""}
     <h3>Reviews</h3>
     <div class="reviews">
       ${
@@ -723,6 +760,16 @@ function openDetails(id) {
   const closeBtn = content.querySelector("#modalClose");
   closeBtn.addEventListener("click", closeModal);
   modal.classList.add("open");
+
+  const similarList = content.querySelector("#similarList");
+  if (similarList) {
+    similarList.querySelectorAll(".similar-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const sid = btn.getAttribute("data-id");
+        if (sid) openDetails(sid);
+      });
+    });
+  }
 
   const favToggle = content.querySelector("#favToggle");
   const syncFavBtn = () => {
@@ -785,18 +832,26 @@ function closeModal() {
 }
 
 function showFavorites() {
+  state.view = "favorites";
   state.filters.category = "";
   state.filters.search = "";
   state.filters.sort = "name";
-  const favIds = state.favorites;
-  const list = state.businesses.filter(b => favIds.has(b.id));
-  const container = qs("businessList");
-  container.innerHTML = "";
-  if (!list.length) {
-    container.innerHTML = `<div class="empty">No favorites yet. Click the heart on a business to add it.</div>`;
-  } else {
-    list.forEach(b => container.appendChild(cardForBusiness(b)));
-  }
+  scrollToDirectory();
+  render();
+}
+
+function showRecommendations() {
+  state.view = "recommendations";
+  state.filters.sort = "rating";
+  state.filters.category = "";
+  state.filters.search = "";
+  scrollToDirectory();
+  render();
+}
+
+function scrollToDirectory() {
+  const el = document.getElementById("directory");
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function addBusinessFlow() {
@@ -834,18 +889,49 @@ function addBusinessFlow() {
 
 function bindEvents() {
   qs("applyFilters").addEventListener("click", () => {
+    state.view = "";
     state.filters.search = qs("search").value.trim();
     state.filters.category = qs("category").value;
     state.filters.sort = qs("sort").value;
     render();
   });
 
+  const navExplore = qs("navExplore");
+  if (navExplore) {
+    navExplore.addEventListener("click", () => {
+      state.view = "";
+      render();
+    });
+  }
+  const navTopRated = qs("navTopRated");
+  if (navTopRated) {
+    navTopRated.addEventListener("click", () => {
+      state.view = "";
+      state.filters.sort = "rating";
+      scrollToDirectory();
+      render();
+    });
+  }
+  const navMostReviewed = qs("navMostReviewed");
+  if (navMostReviewed) {
+    navMostReviewed.addEventListener("click", () => {
+      state.view = "";
+      state.filters.sort = "reviews";
+      scrollToDirectory();
+      render();
+    });
+  }
+  const navRec = qs("navRecommendations");
+  if (navRec) navRec.addEventListener("click", showRecommendations);
+
   qs("topRatedBtn").addEventListener("click", () => {
+    state.view = "";
     state.filters.sort = "rating";
     render();
   });
 
   qs("mostReviewedBtn").addEventListener("click", () => {
+    state.view = "";
     state.filters.sort = "reviews";
     render();
   });

@@ -17,7 +17,7 @@ ALGORITHMS:
 - Hybrid approach combining both methods
 """
 
-from typing import List, Dict
+from typing import List, Dict, Set
 from models import Business, BusinessBoost
 
 
