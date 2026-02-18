@@ -1,12 +1,25 @@
 /* Chrysalis Connect (Static) - Butterfly Theme */
 
-/* Load Lazy Dog font (same as https://www.dafont.com/lazy-dog.font) - CDN uses name "Lazydog" */
-@import url("https://fonts.cdnfonts.com/css/lazydog-2");
-
-/* Self-host option: save lazy_dog.ttf from DaFont into fonts/ for "Lazy Dog" name */
+/*
+ * Lazy Dog font options (https://www.dafont.com/lazy-dog.font):
+ * 1) Direct WOFF from CDN Fonts (below) - works if CDN allows GitHub Pages
+ * 2) CDN stylesheet - already linked in index.html (lazydog-2)
+ * 3) Self-host: save lazy_dog.ttf from DaFont into docs/assets/fonts/
+ * 4) After pushing font to repo: jsDelivr serves it (see second @font-face)
+ */
 @font-face {
   font-family: "Lazy Dog";
-  src: url("fonts/lazy_dog.ttf") format("truetype");
+  src: url("https://fonts.cdnfonts.com/s/81121/lazy_dog.woff") format("woff"),
+       url("fonts/lazy_dog.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* If you add lazy_dog.ttf to docs/assets/fonts/ and push, jsDelivr will serve it (replace USER/REPO with your repo) */
+@font-face {
+  font-family: "Lazy Dog Fallback";
+  src: url("https://cdn.jsdelivr.net/gh/bahana-h/FBLACP2526@main/docs/assets/fonts/lazy_dog.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -31,8 +44,8 @@
   --border: #e2e8f0;
   --radius: 12px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  /* Chrysalis Connect: "Lazydog" from CDN (same as Lazy Dog from DaFont); fallback to self-hosted "Lazy Dog" if font file added */
-  --font-display: "Lazydog", "Lazy Dog", cursive;
+  /* Chrysalis Connect: try Lazy Dog (direct CDN + self-host), CDN names, then cursive */
+  --font-display: "Lazy Dog", "Lazy Dog Fallback", "Lazydog", "lazy_dog", cursive;
   --font-body: "Architects Daughter", cursive;
   --font-small: "The Smile", sans-serif;
 }
