@@ -863,7 +863,7 @@ select:focus {
 }
 
 .similar-item {
-  font-family: var(--font-small);
+  font-family: var(--font-body);
   display: block;
   width: 100%;
   text-align: left;

@@ -941,17 +941,22 @@ function bindEvents() {
   const navRec = qs("navRecommendations");
   if (navRec) navRec.addEventListener("click", showRecommendations);
 
-  qs("topRatedBtn").addEventListener("click", () => {
-    state.view = "";
-    state.filters.sort = "rating";
-    render();
-  });
-
-  qs("mostReviewedBtn").addEventListener("click", () => {
-    state.view = "";
-    state.filters.sort = "reviews";
-    render();
-  });
+  const topRatedBtn = qs("topRatedBtn");
+  if (topRatedBtn) {
+    topRatedBtn.addEventListener("click", () => {
+      state.view = "";
+      state.filters.sort = "rating";
+      render();
+    });
+  }
+  const mostReviewedBtn = qs("mostReviewedBtn");
+  if (mostReviewedBtn) {
+    mostReviewedBtn.addEventListener("click", () => {
+      state.view = "";
+      state.filters.sort = "reviews";
+      render();
+    });
+  }
 
   // Shared Reviews settings (backend URL)
   const settingsBtn = qs("settingsBtn");
