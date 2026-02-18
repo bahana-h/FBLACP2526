@@ -24,8 +24,7 @@ const state = {
   filters: { search: "", category: "", sort: "name" },
   currentLocation: null,
   loading: false,
-  view: "", // "", "favorites", "recommendations"
-  leafletMap: null
+  view: "" // "", "favorites", "recommendations"
 };
 
 const els = {};
@@ -856,83 +855,6 @@ function scrollToDirectory() {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function initMap() {
-  if (typeof L === "undefined") return;
-  const container = document.getElementById("businessMap");
-  const emptyMsg = document.getElementById("mapEmptyMsg");
-  if (!container) return;
-
-  const withLocation = state.businesses.filter(
-    b => b.latitude != null && b.longitude != null && Number.isFinite(b.latitude) && Number.isFinite(b.longitude)
-  );
-
-  if (emptyMsg) emptyMsg.style.display = withLocation.length === 0 ? "block" : "none";
-
-  if (state.leafletMap) {
-    state.leafletMap.remove();
-    state.leafletMap = null;
-  }
-
-  if (withLocation.length === 0) return;
-
-  const defaultCenter = withLocation.length === 1
-    ? [withLocation[0].latitude, withLocation[0].longitude]
-    : [37.7749, -122.4194];
-  const zoom = withLocation.length === 1 ? 14 : 12;
-
-  const map = L.map("businessMap").setView(defaultCenter, zoom);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
-  }).addTo(map);
-  state.leafletMap = map;
-
-  const categoryColors = { food: "#92400e", retail: "#1e40af", services: "#065f46" };
-  const categoryIcons = { food: "fa-utensils", retail: "fa-shopping-bag", services: "fa-tools" };
-  const bounds = L.latLngBounds();
-
-  withLocation.forEach(biz => {
-    const color = categoryColors[biz.category] || "#6366f1";
-    const icon = L.divIcon({
-      className: "custom-marker",
-      html: `<div class="marker-pin" style="background:${color}"><i class="fas ${categoryIcons[biz.category] || "fa-store"}"></i></div>`,
-      iconSize: [36, 36],
-      iconAnchor: [18, 36]
-    });
-    const marker = L.marker([biz.latitude, biz.longitude], { icon }).addTo(map);
-    bounds.extend([biz.latitude, biz.longitude]);
-
-    const rating = averageRating(biz);
-    const reviewCount = totalReviews(biz);
-    const popupContent = `
-      <div class="map-popup">
-        <strong>${escapeHtml(biz.name)}</strong>
-        <p class="map-popup-address"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(biz.address)}</p>
-        ${reviewCount > 0 ? `<p class="map-popup-rating"><i class="fas fa-star"></i> ${rating.toFixed(1)} (${reviewCount} reviews)</p>` : ""}
-        <button type="button" class="btn primary btn-sm map-popup-btn" data-biz-id="${escapeHtml(biz.id)}">View Details</button>
-      </div>`;
-    marker.bindPopup(popupContent);
-
-    marker.on("popupopen", () => {
-      const popupEl = marker.getPopup().getElement();
-      if (popupEl) {
-        const btn = popupEl.querySelector(".map-popup-btn");
-        if (btn) btn.addEventListener("click", () => {
-          openDetails(biz.id);
-          if (state.leafletMap) state.leafletMap.closePopup();
-        });
-      }
-    });
-  });
-
-  if (withLocation.length > 1) map.fitBounds(bounds, { padding: [40, 40] });
-}
-
-function escapeHtml(s) {
-  const div = document.createElement("div");
-  div.textContent = s;
-  return div.innerHTML;
-}
-
 function openHelpModal() {
   const el = qs("helpModal");
   if (el) {
@@ -1052,14 +974,6 @@ function bindEvents() {
   qs("favoritesBtn").addEventListener("click", showFavorites);
   qs("addBtn").addEventListener("click", addBusinessFlow);
 
-  const navMap = qs("navMap");
-  if (navMap) {
-    navMap.addEventListener("click", () => {
-      const el = document.getElementById("mapSection");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setTimeout(initMap, 400);
-    });
-  }
   const navHelp = qs("navHelp");
   if (navHelp) navHelp.addEventListener("click", openHelpModal);
   const helpModalClose = qs("helpModalClose");
@@ -1111,6 +1025,16 @@ function init() {
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(() => getCurrentLocation(), 350);
     });
+  }
+
+  // Open business detail from map page link (index.html#detail=ID)
+  const hash = window.location.hash;
+  const detailMatch = hash && hash.match(/^#detail=(.+)$/);
+  if (detailMatch) {
+    const id = decodeURIComponent(detailMatch[1]);
+    setTimeout(() => {
+      if (state.businesses.some(b => b.id === id)) openDetails(id);
+    }, 200);
   }
 }
 

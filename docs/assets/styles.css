@@ -744,6 +744,16 @@ select:focus {
   font-family: var(--font-body);
 }
 
+.map-empty-msg a { color: var(--primary); text-decoration: none; }
+.map-empty-msg a:hover { text-decoration: underline; }
+
+/* Map page (standalone) */
+.map-page-main { padding: 2rem 0 3rem; }
+.map-page-header { text-align: center; margin-bottom: 1.5rem; }
+.map-page-header h1 { font-family: var(--font-display); font-size: 1.75rem; margin: 0 0 0.5rem; }
+.map-page-header p { margin: 0; color: var(--muted); font-family: var(--font-body); }
+.map-page-container .business-map { height: 70vh; min-height: 420px; }
+
 .custom-marker { background: none !important; border: none !important; }
 .marker-pin {
   width: 32px;

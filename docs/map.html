@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map - Chrysalis Connect</title>
+  <link href="https://fonts.cdnfonts.com/css/lazydog-2" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet" />
+  <link href="https://fonts.cdnfonts.com/css/the-smile" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css?v=6" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-butterfly"></i>
+        <a href="index.html" class="nav-brand-link">Chrysalis Connect</a>
+      </div>
+      <div class="nav-actions">
+        <a href="index.html" class="btn ghost"><i class="fas fa-compass"></i> Explore</a>
+        <a href="index.html#directory" class="btn ghost"><i class="fas fa-star"></i> Top Rated</a>
+        <a href="index.html#directory" class="btn ghost"><i class="fas fa-comments"></i> Most Reviewed</a>
+        <a href="index.html#directory" class="btn ghost"><i class="fas fa-heart"></i> Favorites</a>
+        <span class="btn ghost" style=" opacity: 0.9;"><i class="fas fa-map-marked-alt"></i> Map</span>
+        <a href="index.html" class="btn primary"><i class="fas fa-arrow-left"></i> Back to directory</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container map-page-main">
+    <div class="page-header map-page-header">
+      <h1><i class="fas fa-map-marked-alt"></i> Business Map</h1>
+      <p>Find local businesses on the map. Click a marker for details, or <strong>View Details</strong> to open the business on the directory page.</p>
+    </div>
+
+    <div class="map-container map-page-container">
+      <div id="businessMap" class="business-map"></div>
+      <div class="map-legend">
+        <h3><i class="fas fa-info-circle"></i> Legend</h3>
+        <div class="legend-items">
+          <span class="legend-item"><i class="fas fa-utensils" style="color: #92400e;"></i> Food</span>
+          <span class="legend-item"><i class="fas fa-shopping-bag" style="color: #1e40af;"></i> Retail</span>
+          <span class="legend-item"><i class="fas fa-tools" style="color: #065f46;"></i> Services</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="map-empty-msg" id="mapEmptyMsg">No businesses with location data yet. <a href="index.html">Go to the directory</a>, search for a location or add businesses with addresses, then return to the map.</p>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="assets/map-page.js"></script>
+</body>
+</html>
