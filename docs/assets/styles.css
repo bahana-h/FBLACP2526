@@ -521,6 +521,7 @@ select:focus {
 }
 
 .pill {
+  font-family: var(--font-body);
   padding: 8px 12px;
   border-radius: 999px;
   background: #eef2ff;
@@ -578,7 +579,7 @@ select:focus {
 }
 
 .badge {
-  font-family: var(--font-small);
+  font-family: var(--font-body);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -778,6 +779,7 @@ select:focus {
 }
 
 .pill-inline {
+  font-family: var(--font-body);
   display: inline-flex;
   align-items: center;
   gap: 6px;
