@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Business - Chrysalis Connect</title>
+  <link href="https://fonts.cdnfonts.com/css/lazydog-2" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet" />
+  <link href="https://fonts.cdnfonts.com/css/the-smile" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css?v=6" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-butterfly"></i>
+        <a href="index.html" class="nav-brand-link">Chrysalis Connect</a>
+      </div>
+      <div class="nav-actions">
+        <a href="index.html" class="btn ghost"><i class="fas fa-compass"></i> Explore</a>
+        <a href="qa.html" class="btn ghost"><i class="fas fa-comments"></i> Q&amp;A</a>
+        <a href="reports.html" class="btn ghost"><i class="fas fa-chart-bar"></i> Reports</a>
+        <a href="index.html" class="btn primary"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container add-business-main">
+    <h1><i class="fas fa-plus-circle"></i> Add a business</h1>
+    <p class="sub">Fill in the details below. All fields with * are required. Your submission is saved on this device.</p>
+
+    <form id="addBusinessForm" class="form-card">
+      <div class="row">
+        <label for="bizName">Business name *</label>
+        <input type="text" id="bizName" required placeholder="e.g. Joe's Coffee House" />
+      </div>
+      <div class="row">
+        <label for="bizCategory">Category *</label>
+        <select id="bizCategory" required>
+          <option value="food">Food</option>
+          <option value="retail">Retail</option>
+          <option value="services">Services</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="bizAddress">Address *</label>
+        <input type="text" id="bizAddress" required placeholder="e.g. 123 Main St, City" />
+      </div>
+      <div class="row">
+        <label for="bizPhone">Phone (optional)</label>
+        <input type="text" id="bizPhone" placeholder="e.g. 555-0100" />
+      </div>
+      <div class="row">
+        <label for="bizDescription">Description (optional)</label>
+        <textarea id="bizDescription" placeholder="Short description of the business"></textarea>
+      </div>
+      <fieldset style="border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem;">
+        <legend style="font-family: var(--font-body); font-weight: 700;">Deal or coupon (optional)</legend>
+        <div class="row">
+          <label for="dealTitle">Deal title</label>
+          <input type="text" id="dealTitle" placeholder="e.g. Buy 2 Get 1 Free" />
+        </div>
+        <div class="row">
+          <label for="dealDesc">Deal description</label>
+          <input type="text" id="dealDesc" placeholder="e.g. Any coffee drinks" />
+        </div>
+        <div class="row">
+          <label for="dealExpires">Expires (YYYY-MM-DD)</label>
+          <input type="text" id="dealExpires" placeholder="e.g. 2025-12-31" />
+        </div>
+      </fieldset>
+      <div class="row verification-row">
+        <label id="captchaLabel">Verification: </label>
+        <input type="text" id="captchaInput" placeholder="Answer" style="width: 80px; margin-bottom: 0;" required />
+      </div>
+      <button type="submit" class="btn primary"><i class="fas fa-check"></i> Add business</button>
+      <p id="formError" class="helper" style="color: var(--danger); margin-top: 0.5rem; display: none;"></p>
+    </form>
+  </main>
+
+  <script src="assets/add-business.js"></script>
+</body>
+</html>

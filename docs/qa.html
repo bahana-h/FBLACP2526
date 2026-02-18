@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Q&amp;A - Chrysalis Connect</title>
+  <link href="https://fonts.cdnfonts.com/css/lazydog-2" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet" />
+  <link href="https://fonts.cdnfonts.com/css/the-smile" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css?v=6" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-butterfly"></i>
+        <a href="index.html" class="nav-brand-link">Chrysalis Connect</a>
+      </div>
+      <div class="nav-actions">
+        <a href="index.html" class="btn ghost"><i class="fas fa-compass"></i> Explore</a>
+        <a href="add-business.html" class="btn ghost"><i class="fas fa-plus-circle"></i> Add Business</a>
+        <a href="reports.html" class="btn ghost"><i class="fas fa-chart-bar"></i> Reports</a>
+        <a href="index.html" class="btn primary"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container qa-main">
+    <div class="page-header qa-header">
+      <h1><i class="fas fa-comments"></i> Ask about Chrysalis Connect</h1>
+      <p>Type your question below. I'll try to find the best answer from our help content.</p>
+    </div>
+
+    <div class="qa-input-card">
+      <label for="qaInput" class="visually-hidden">Your question</label>
+      <div class="qa-input-row">
+        <input type="text" id="qaInput" placeholder="e.g. How do I add a business? How do favorites work?" autocomplete="off" />
+        <button type="button" class="btn primary" id="qaSubmit"><i class="fas fa-paper-plane"></i> Ask</button>
+      </div>
+      <p class="qa-hint">Try: "reviews", "map", "favorites", "shared reviews", "recommendations", "verification"</p>
+    </div>
+
+    <div id="qaAnswerArea" class="qa-answer-area" aria-live="polite">
+      <div id="qaPlaceholder" class="qa-placeholder">
+        <i class="fas fa-lightbulb"></i>
+        <p>Your answer will appear here after you ask a question.</p>
+      </div>
+      <div id="qaResults" class="qa-results" hidden></div>
+    </div>
+
+    <section class="qa-suggested" aria-label="Suggested questions">
+      <h2>Suggested questions</h2>
+      <div class="qa-suggested-grid" id="qaSuggested"></div>
+    </section>
+  </main>
+
+  <script src="assets/qa.js"></script>
+</body>
+</html>

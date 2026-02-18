@@ -959,7 +959,7 @@ function bindEvents() {
   }
 
   qs("favoritesBtn").addEventListener("click", showFavorites);
-  qs("addBtn").addEventListener("click", addBusinessFlow);
+  // Add Business is now a link to add-business.html (no click handler)
 
   const navHelp = qs("navHelp");
   if (navHelp) navHelp.addEventListener("click", openHelpModal);

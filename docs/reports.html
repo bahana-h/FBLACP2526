@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - Chrysalis Connect</title>
+  <link href="https://fonts.cdnfonts.com/css/lazydog-2" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" rel="stylesheet" />
+  <link href="https://fonts.cdnfonts.com/css/the-smile" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css?v=6" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <i class="fas fa-butterfly"></i>
+        <a href="index.html" class="nav-brand-link">Chrysalis Connect</a>
+      </div>
+      <div class="nav-actions">
+        <a href="index.html" class="btn ghost"><i class="fas fa-compass"></i> Explore</a>
+        <a href="add-business.html" class="btn ghost"><i class="fas fa-plus-circle"></i> Add Business</a>
+        <a href="qa.html" class="btn ghost"><i class="fas fa-comments"></i> Q&amp;A</a>
+        <a href="index.html" class="btn primary"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding: 2rem 0 3rem;">
+    <h1 style="font-family: var(--font-display); margin-bottom: 0.5rem;"><i class="fas fa-chart-bar"></i> Reports</h1>
+    <p class="sub" style="margin-bottom: 1.5rem;">Customize filters and analyze your directory. Print or download the report below.</p>
+
+    <div class="reports-toolbar">
+      <label for="reportCategory">Category:</label>
+      <select id="reportCategory">
+        <option value="">All</option>
+        <option value="food">Food</option>
+        <option value="retail">Retail</option>
+        <option value="services">Services</option>
+      </select>
+      <label for="reportSort">Sort by:</label>
+      <select id="reportSort">
+        <option value="name">Name</option>
+        <option value="rating">Highest rated</option>
+        <option value="reviews">Most reviewed</option>
+      </select>
+      <button type="button" class="btn ghost" id="reportRefresh"><i class="fas fa-sync-alt"></i> Refresh</button>
+      <button type="button" class="btn primary" id="reportPrint"><i class="fas fa-print"></i> Print report</button>
+      <button type="button" class="btn secondary" id="reportDownload"><i class="fas fa-download"></i> Download report</button>
+    </div>
+
+    <div id="printArea">
+      <div class="report-summary" id="reportSummary"></div>
+      <div id="reportTableWrap"></div>
+    </div>
+  </main>
+
+  <script src="assets/reports.js"></script>
+</body>
+</html>
