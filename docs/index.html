@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Chrysalis Connect – Main directory page: landing, location search, filters, business list, detail modal, Help modal. -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -69,6 +70,7 @@
     </div>
   </header>
 
+  <!-- Directory: location search, stats, filters, and business list (filled by app.js). -->
   <header class="hero">
     <div class="container hero-content" id="directory">
       <div>
@@ -112,6 +114,7 @@
   </div>
 
   <main class="container">
+    <!-- Filters and category pills; Apply button and dropdowns drive state.filters in app.js. -->
     <section class="filters-card">
       <div class="filters">
         <div class="filter">
@@ -136,9 +139,11 @@
     </section>
 
     <h2 class="view-title" id="viewTitle" aria-live="polite"></h2>
+    <!-- Business cards are injected here by app.js render() from businessCardTemplate. -->
     <section id="businessList" class="grid"></section>
   </main>
 
+  <!-- Help overlay: "How to Use Chrysalis Connect" (opened by nav Help button). -->
   <div class="modal" id="helpModal" aria-labelledby="helpModalTitle" aria-hidden="true">
     <div class="modal-content help-modal-content">
       <button class="modal-close" id="helpModalClose" aria-label="Close">&times;</button>
@@ -146,7 +151,7 @@
       <div class="help-sections">
         <section>
           <h3><i class="fas fa-compass"></i> Explore Businesses</h3>
-          <p>Click <strong>Explore</strong> or enter a location to browse local businesses. Use the search bar, category filter, and sort options to find what you need. Click any business card to see full details, reviews, and deals.</p>
+          <p>Click <strong>Explore Nearby</strong> on the landing page or enter a location (or <strong>Use My Location</strong>) to browse local businesses. Use the search bar, category filter, and sort options to find what you need. Click any business card to see full details, reviews, and deals.</p>
         </section>
         <section>
           <h3><i class="fas fa-gear"></i> Shared Reviews</h3>
@@ -184,12 +189,14 @@
     </div>
   </div>
 
+  <!-- Business detail modal: content is built by app.js openDetails(); close by overlay or ×. -->
   <div class="modal" id="modal">
     <div class="modal-content" id="modalContent">
       <button class="modal-close" id="modalClose">&times;</button>
     </div>
   </div>
 
+  <!-- Template for each business card; cloned and filled by app.js cardForBusiness(). -->
   <template id="businessCardTemplate">
     <article class="card">
       <div class="card-header">

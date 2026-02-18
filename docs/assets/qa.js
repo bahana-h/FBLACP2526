@@ -1,5 +1,11 @@
-// Intelligent Q&A: keyword-based matching with a knowledge base
+/**
+ * Q&A page: intelligent answer matching from a knowledge base.
+ * User types a question; we score each knowledge item by exact match, phrase overlap,
+ * and keyword match (multi-word phrases score higher). Top 1–3 answers are shown.
+ * Suggested question buttons prefill the input and run the same matching.
+ */
 (function () {
+  /** Knowledge base: each item has keywords (phrases to match), question (displayed), and answer (HTML). */
   var knowledge = [
     {
       keywords: ["add business", "add a business", "new business", "submit business", "create business", "list a business"],
@@ -83,10 +89,12 @@
     }
   ];
 
+  /** Normalize string for matching: lowercase, single spaces, trimmed. */
   function normalize(s) {
     return (s || "").toLowerCase().trim().replace(/\s+/g, " ");
   }
 
+  /** Score how well user input matches a knowledge item: exact/question overlap + phrase + keyword hits. */
   function scoreMatch(input, item) {
     var n = normalize(input);
     var q = normalize(item.question);
@@ -113,6 +121,7 @@
     return score;
   }
 
+  /** Return up to 3 best-matching knowledge items for the given input, or [] if too short. */
   function getAnswers(input) {
     if (!input || normalize(input).length < 2) return [];
     var scored = knowledge.map(function (item) {
@@ -122,6 +131,7 @@
     return scored.slice(0, 3).map(function (x) { return x.item; });
   }
 
+  /** Turn an array of knowledge items into HTML for the result cards (or a single "no match" card). */
   function renderResults(items) {
     if (!items.length) {
       return "<div class=\"qa-result-card qa-no-match\">" +
@@ -136,6 +146,7 @@
     }).join("");
   }
 
+  /** Escape text for safe insertion into HTML (prevents XSS). */
   function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
@@ -150,18 +161,21 @@
 
   if (!inputEl || !resultsEl) return;
 
+  /** Show the results area with given HTML; hide placeholder. */
   function showResults(html) {
     placeholder.style.display = "none";
     resultsEl.hidden = false;
     resultsEl.innerHTML = html;
   }
 
+  /** Show the empty-state placeholder; hide and clear results. */
   function showPlaceholder() {
     placeholder.style.display = "block";
     resultsEl.hidden = true;
     resultsEl.innerHTML = "";
   }
 
+  /** Run matching for current input and display results or placeholder. */
   function ask() {
     var q = inputEl.value.trim();
     if (!q) {
@@ -177,7 +191,7 @@
     if (e.key === "Enter") ask();
   });
 
-  // Suggested questions (first 8 from knowledge for variety)
+  /* Suggested question buttons: first 8 knowledge items; click sets input and runs ask(). */
   if (suggestedEl) {
     var suggested = knowledge.slice(0, 8);
     suggestedEl.innerHTML = suggested.map(function (item) {

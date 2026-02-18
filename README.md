@@ -4,6 +4,7 @@ A comprehensive web application for discovering and supporting small, local busi
 
 ## 📋 Table of Contents
 
+- [Presentation & Rating Sheet](#presentation--rating-sheet)
 - [Features](#features)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
@@ -19,6 +20,14 @@ A comprehensive web application for discovering and supporting small, local busi
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## Presentation & Rating Sheet
+
+**For judges and presenters:** The project is aligned with the Coding & Programming rating sheet. A dedicated document maps each expectation (language selection, code comments, modular design, UX, intuitiveness, intelligent features, input validation, functionality, output & data analysis, data structures & scope) to the codebase and UI.
+
+👉 **[PRESENTATION.md](PRESENTATION.md)** — Use this for the demonstration and to show how the program meets or exceeds each criterion.
 
 ---
 

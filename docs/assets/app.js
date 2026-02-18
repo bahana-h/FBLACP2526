@@ -18,25 +18,31 @@ const sampleBusinesses = [
   }
 ];
 
+// -----------------------------------------------------------------------------
+// Application state (single source of truth for directory, favorites, and UI)
+// -----------------------------------------------------------------------------
 const state = {
-  businesses: [],
-  favorites: new Set(),
+  businesses: [],           // All loaded businesses (from OSM search, sample data, or localStorage)
+  favorites: new Set(),     // Business IDs the user has favorited (persisted in cc-data)
   filters: { search: "", category: "", sort: "name" },
-  currentLocation: null,
-  loading: false,
-  view: "" // "", "favorites", "recommendations"
+  currentLocation: null,    // { latitude, longitude } or string; used for re-search when filters change
+  loading: false,           // True while fetching from Overpass/Nominatim
+  view: ""                  // "" = directory, "favorites", or "recommendations"
 };
 
-const els = {};
+const els = {};             // Cached DOM references (e.g. businessList) filled in init()
 
+/** Return element by id; used throughout for DOM access. */
 function qs(id) {
   return document.getElementById(id);
 }
 
+/** Clamp a number to [min, max]. Used for star rating display. */
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
+/** Return HTML for the visual star meter (CSS uses --rating for width). Accessible via aria-label. */
 function starMeterHTML(rating) {
   // Render fractional stars using a CSS meter overlay.
   // Example: rating=4.3 fills 86% of the 5-star bar.
@@ -181,7 +187,11 @@ function showBackendStatus() {
 // No API key needed - OpenStreetMap is completely free!
 
 
-// Geolocation
+// -----------------------------------------------------------------------------
+// Geolocation and location search
+// -----------------------------------------------------------------------------
+
+/** Request browser geolocation; on success runs searchBusinesses with lat/lon. */
 function getCurrentLocation() {
   if (!navigator.geolocation) {
     showStatus("Geolocation is not supported by your browser.", "error");
@@ -208,6 +218,7 @@ function getCurrentLocation() {
   );
 }
 
+/** Run search using the text in the location input (geocoded via Nominatim). */
 function searchByLocationText() {
   const locationText = qs("locationInput").value.trim();
   if (!locationText) {
@@ -440,9 +451,12 @@ function showStatus(message, type = 'info') {
   }
 }
 
+// -----------------------------------------------------------------------------
+// Persistence and state helpers
+// -----------------------------------------------------------------------------
+
+/** Load businesses and favorites from localStorage (key: cc-data). Called on init. */
 function loadState() {
-  // Local persistence for the static site.
-  // NOTE: This is device/browser-specific. To share reviews across users, use the Flask site.
   const stored = localStorage.getItem("cc-data");
   if (stored) {
     try {
@@ -467,6 +481,7 @@ function loadState() {
   }
 }
 
+/** Persist current businesses and favorites to localStorage so they survive refresh. */
 function saveState() {
   localStorage.setItem(
     "cc-data",
@@ -494,6 +509,11 @@ function totalReviews(biz) {
   return biz.reviews?.length || 0;
 }
 
+// -----------------------------------------------------------------------------
+// Filters, sorting, and directory rendering
+// -----------------------------------------------------------------------------
+
+/** Update the stats bar (total businesses, reviews, average rating) above the list. */
 function renderStats() {
   qs("statBusinesses").textContent = state.businesses.length;
   const allReviews = state.businesses.reduce((a, b) => a + totalReviews(b), 0);
@@ -503,6 +523,7 @@ function renderStats() {
   qs("statRating").textContent = avg.toFixed(1);
 }
 
+/** Rebuild category dropdown and pills from current businesses; pills toggle filter and can trigger re-search. */
 function buildCategories() {
   const select = qs("category");
   const pills = qs("categoryPills");
@@ -532,6 +553,7 @@ function buildCategories() {
   });
 }
 
+/** Sync filter inputs (search, category, sort) and pill active state from state.filters. */
 function updateFiltersUI() {
   qs("search").value = state.filters.search;
   qs("category").value = state.filters.category;
@@ -541,6 +563,7 @@ function updateFiltersUI() {
   });
 }
 
+/** Return businesses filtered by search/category and sorted by name, rating, or review count. */
 function filteredBusinesses() {
   let list = [...state.businesses];
   const { search, category, sort } = state.filters;
@@ -568,6 +591,7 @@ function filteredBusinesses() {
   return list;
 }
 
+/** Return up to `limit` businesses in the same category as `biz`, sorted by rating (for "Similar businesses"). */
 function getSimilarBusinesses(biz, limit) {
   limit = limit || 3;
   return state.businesses
@@ -583,6 +607,7 @@ function setViewTitle(text) {
   el.style.display = text ? "block" : "none";
 }
 
+/** Main render: update stats, filters UI, then fill business list (favorites view, recommendations, or filtered directory). */
 function render() {
   renderStats();
   updateFiltersUI();
@@ -622,6 +647,7 @@ function render() {
   data.forEach(biz => list.appendChild(cardForBusiness(biz)));
 }
 
+/** Build a single business card DOM node (name, category, address, rating, deals, favorite button, Details). */
 function cardForBusiness(biz) {
   const tpl = document.getElementById("businessCardTemplate").content.cloneNode(true);
   tpl.querySelector(".card-title").textContent = biz.name;
@@ -668,6 +694,7 @@ function cardForBusiness(biz) {
   return tpl;
 }
 
+/** Open the detail modal for business `id`: header, meta, deals, similar businesses, reviews list, and Add Review form. */
 function openDetails(id) {
   const biz = state.businesses.find(b => b.id === id);
   if (!biz) return;
@@ -828,10 +855,12 @@ function openDetails(id) {
   });
 }
 
+/** Close the business detail modal. */
 function closeModal() {
   qs("modal").classList.remove("open");
 }
 
+/** Switch to Favorites view and render only favorited businesses. */
 function showFavorites() {
   state.view = "favorites";
   state.filters.category = "";
@@ -841,6 +870,7 @@ function showFavorites() {
   render();
 }
 
+/** Switch to Recommendations view (sort by rating, show directory list). */
 function showRecommendations() {
   state.view = "recommendations";
   state.filters.sort = "rating";
@@ -904,6 +934,11 @@ function addBusinessFlow() {
   render();
 }
 
+// -----------------------------------------------------------------------------
+// Event binding (filters, nav, modals, location, hash)
+// -----------------------------------------------------------------------------
+
+/** Attach all click and keypress handlers for filters, nav buttons, modals, and location search. */
 function bindEvents() {
   qs("applyFilters").addEventListener("click", () => {
     state.view = "";
@@ -981,9 +1016,9 @@ function bindEvents() {
   // No API key needed - OpenStreetMap is free!
 }
 
+/** Initialize app: cache refs, load state, build categories, bind events, render, then sync shared reviews and handle hash. */
 function init() {
   els.list = qs("businessList");
-  // Hide API key banner - not needed with OpenStreetMap
   qs("apiKeyBanner").style.display = "none";
   showBackendStatus();
   loadState();

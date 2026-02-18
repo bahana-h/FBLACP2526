@@ -1,16 +1,21 @@
-// Add Business page: form submit writes to localStorage (cc-data) and redirects to index
+/**
+ * Add Business page: form validation, math verification (captcha), then save new business
+ * to localStorage (cc-data) and redirect to index.html#directory.
+ */
 (function () {
   var form = document.getElementById("addBusinessForm");
   var captchaLabel = document.getElementById("captchaLabel");
   var captchaInput = document.getElementById("captchaInput");
   var formError = document.getElementById("formError");
 
+  /* One-time captcha: two random numbers 1–10; user must enter the sum to submit. */
   var captchaA = Math.floor(Math.random() * 10) + 1;
   var captchaB = Math.floor(Math.random() * 10) + 1;
   var captchaAnswer = String(captchaA + captchaB);
 
   if (captchaLabel) captchaLabel.textContent = "Verification: What is " + captchaA + " + " + captchaB + "? *";
 
+  /** Read cc-data from localStorage; return { businesses, favorites }. */
   function getStored() {
     try {
       var raw = localStorage.getItem("cc-data");
@@ -22,10 +27,12 @@
     }
   }
 
+  /** Write full data (businesses + favorites) back to localStorage. */
   function setStored(data) {
     localStorage.setItem("cc-data", JSON.stringify(data));
   }
 
+  /** Show or hide the form error message element. */
   function showError(msg) {
     if (formError) {
       formError.textContent = msg || "";
@@ -38,6 +45,7 @@
       e.preventDefault();
       showError("");
 
+      /* Read all form fields. */
       var name = document.getElementById("bizName").value.trim();
       var category = (document.getElementById("bizCategory").value || "food").toLowerCase();
       var address = document.getElementById("bizAddress").value.trim();
@@ -48,6 +56,7 @@
       var dealExpires = (document.getElementById("dealExpires").value || "").trim();
       var userCaptcha = (captchaInput && captchaInput.value || "").trim();
 
+      /* Required fields and captcha check. */
       if (!name) {
         showError("Please enter a business name.");
         return;
@@ -61,6 +70,7 @@
         return;
       }
 
+      /* Build optional deals array. */
       var deals = [];
       if (dealTitle) {
         deals.push({ title: dealTitle, description: dealDesc, expires: dealExpires });
@@ -81,6 +91,7 @@
       stored.businesses.push(newBiz);
       setStored(stored);
 
+      /* Redirect to main directory so the new business appears in the list. */
       window.location.href = "index.html#directory";
     });
   }

@@ -1,5 +1,9 @@
-// Map page: reads businesses from localStorage (same as main app) and shows them on a Leaflet map.
+/**
+ * Map page: reads businesses from localStorage (cc-data), filters to those with lat/lon,
+ * and displays them on a Leaflet map with category-colored markers and popups (name, address, rating, link to detail).
+ */
 (function () {
+  /** Read businesses array from cc-data in localStorage. */
   function getBusinesses() {
     try {
       const raw = localStorage.getItem("cc-data");
@@ -11,6 +15,7 @@
     }
   }
 
+  /** Average rating from reviews, or biz.rating if a positive number. */
   function averageRating(biz) {
     if (typeof biz.rating === "number" && biz.rating > 0) return biz.rating;
     if (!biz.reviews || !biz.reviews.length) return 0;
@@ -19,11 +24,13 @@
     }, 0) / biz.reviews.length;
   }
 
+  /** Total review count for display in popup. */
   function totalReviews(biz) {
     if (biz.review_count !== undefined) return (biz.review_count || 0) + (biz.reviews && biz.reviews.length || 0);
     return (biz.reviews && biz.reviews.length) || 0;
   }
 
+  /** Escape text for safe HTML in popup content. */
   function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
@@ -35,6 +42,7 @@
   if (!container) return;
 
   var businesses = getBusinesses();
+  /** Only businesses with valid latitude/longitude get markers. */
   var withLocation = businesses.filter(function (b) {
     return b.latitude != null && b.longitude != null &&
       Number.isFinite(b.latitude) && Number.isFinite(b.longitude);
@@ -44,8 +52,9 @@
 
   if (withLocation.length === 0) return;
 
-  if (typeof L === "undefined") return;
+  if (typeof L === "undefined") return;  /* Leaflet not loaded (script missing or blocked). */
 
+  /* Center: single business at its coords; multiple at SF default with fitBounds. */
   var defaultCenter = withLocation.length === 1
     ? [withLocation[0].latitude, withLocation[0].longitude]
     : [37.7749, -122.4194];
@@ -60,6 +69,7 @@
   var categoryIcons = { food: "fa-utensils", retail: "fa-shopping-bag", services: "fa-tools" };
   var bounds = L.latLngBounds();
 
+  /* Add a marker per business; popup shows name, address, rating, and "View Details" link to index.html#detail=id. */
   withLocation.forEach(function (biz) {
     var color = categoryColors[biz.category] || "#6366f1";
     var icon = L.divIcon({
