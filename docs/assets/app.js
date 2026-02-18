@@ -920,24 +920,6 @@ function bindEvents() {
       render();
     });
   }
-  const navTopRated = qs("navTopRated");
-  if (navTopRated) {
-    navTopRated.addEventListener("click", () => {
-      state.view = "";
-      state.filters.sort = "rating";
-      scrollToDirectory();
-      render();
-    });
-  }
-  const navMostReviewed = qs("navMostReviewed");
-  if (navMostReviewed) {
-    navMostReviewed.addEventListener("click", () => {
-      state.view = "";
-      state.filters.sort = "reviews";
-      scrollToDirectory();
-      render();
-    });
-  }
   const navRec = qs("navRecommendations");
   if (navRec) navRec.addEventListener("click", showRecommendations);
 
