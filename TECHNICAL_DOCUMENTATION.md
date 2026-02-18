@@ -100,7 +100,6 @@ FBLACP2526/
 ├── models.py                 # Business models (Model)
 ├── validators.py             # Input validation functions
 ├── recommendations.py        # Intelligent recommendation algorithms
-├── generate_fake_businesses.py # Data generation script
 ├── templates/               # HTML templates (View)
 │   ├── base.html
 │   ├── index.html

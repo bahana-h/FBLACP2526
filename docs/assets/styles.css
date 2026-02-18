@@ -943,7 +943,9 @@ select:focus {
   .btn { width: 100%; justify-content: center; }
 }
 
-/* Q&A page */
+/* Q&A page: use Architects Daughter for all text (including nav brand) */
+.qa-page .nav-brand,
+.qa-page .nav-brand-link { font-family: var(--font-body); }
 .qa-main { padding: 2rem 0 3rem; }
 .qa-header { text-align: center; margin-bottom: 1.5rem; }
 .qa-header h1 { font-family: var(--font-body); font-size: 1.75rem; margin: 0 0 0.5rem; }
@@ -957,7 +959,7 @@ select:focus {
 }
 .qa-input-row { display: flex; gap: 10px; margin-bottom: 8px; }
 .qa-input-row input { flex: 1; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-family: var(--font-body); font-size: 1rem; }
-.qa-hint { margin: 0; font-size: 0.875rem; color: var(--muted); font-family: var(--font-small); }
+.qa-hint { margin: 0; font-size: 0.875rem; color: var(--muted); font-family: var(--font-body); }
 .qa-answer-area { min-height: 120px; margin-bottom: 2rem; }
 .qa-placeholder { text-align: center; padding: 2rem; color: var(--muted); font-family: var(--font-body); }
 .qa-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; display: block; color: var(--primary); }
@@ -1017,10 +1019,13 @@ select:focus {
 .report-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
 .report-summary .stat-box { background: var(--card); padding: 1rem; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; }
 .report-summary .stat-box .num { font-family: var(--font-body); font-size: 1.75rem; color: var(--primary); }
-.report-summary .stat-box .label { font-family: var(--font-small); font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+.report-summary .stat-box .label { font-family: var(--font-body); font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
 .report-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 0.9375rem; }
 .report-table th, .report-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
 .report-table th { background: var(--bg); font-weight: 700; color: var(--primary); }
+/* Reports page: use Architects Daughter for all text (including nav brand) */
+.reports-page .nav-brand,
+.reports-page .nav-brand-link { font-family: var(--font-body); }
 .reports-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 1rem; }
 .reports-page-title { font-family: var(--font-body); font-size: 1.75rem; margin-bottom: 0.5rem; }
 .reports-toolbar label { font-family: var(--font-body); margin-right: 6px; }

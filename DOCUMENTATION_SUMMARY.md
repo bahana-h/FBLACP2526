@@ -441,9 +441,8 @@ def get_average_rating(self) -> float:
 2. `app.py` - Flask routes and handlers
 3. `validators.py` - Input validation functions
 4. `recommendations.py` - Intelligent algorithms
-5. `generate_fake_businesses.py` - Data generation
-6. Templates - HTML structure
-7. Static files - CSS and JavaScript
+5. Templates - HTML structure
+6. Static files - CSS and JavaScript
 
 ## Summary
 

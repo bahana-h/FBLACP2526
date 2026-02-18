@@ -271,70 +271,7 @@ business_boost = BusinessBoost()
 
 ---
 
-### 5. `generate_fake_businesses.py` - Data Generation
-
-**Purpose**: Generate large dataset of fake businesses for testing.
-
-#### Key Components
-
-**Data Lists**:
-- `CA_CITIES`: California cities
-- `US_CITIES_OTHER`: Other US cities
-- `WORLD_CITIES`: International cities
-- `FOOD_PREFIXES/TYPES`: Food business name parts
-- `RETAIL_PREFIXES/TYPES`: Retail business name parts
-- `SERVICE_PREFIXES/TYPES`: Service business name parts
-- `DEAL_TITLES/DESCS`: Deal templates
-- `REVIEW_COMMENTS`: Review text templates
-- `REVIEW_NAMES`: Reviewer name pool
-
-**Functions**:
-
-**`random_phone()`** - Generate phone number
-- Format: (XXX) XXX-XXXX
-- Random digits
-
-**`random_street()`** - Generate street address
-- Random number + street name
-- Realistic street names
-
-**`build_business_name()`** - Generate business name
-- Combines prefix + type
-- Category-specific
-
-**`build_description()`** - Generate description
-- Category-specific base text
-- Random "family-owned" or "locally owned" suffix
-
-**`random_deals()`** - Generate deals
-- 70% of businesses have deals
-- 1-2 deals per business
-- Random expiration dates
-
-**`random_reviews()`** - Generate reviews
-- 60% of businesses have reviews
-- 1-8 reviews per business
-- Weighted ratings (favor 4-5 stars)
-- Random dates (up to 2 years ago)
-
-**`make_business()`** - Create business
-- Combines all generators
-- Creates Business instance
-- Adds reviews
-
-**`generate_region_businesses()`** - Generate for region
-- Takes count and city list
-- Generates specified number
-- Progress reporting
-
-**`main()`** - Main execution
-- Generates 5K CA, 10K US other, 5K world
-- Combines all businesses
-- Saves to JSON file
-
----
-
-### 6. `templates/` - HTML Templates
+### 5. `templates/` - HTML Templates
 
 #### `base.html` - Base Template
 
@@ -390,7 +327,7 @@ business_boost = BusinessBoost()
 
 ---
 
-### 7. `static/css/style.css` - Styling
+### 6. `static/css/style.css` - Styling
 
 **Purpose**: Visual design and layout.
 
@@ -402,7 +339,7 @@ business_boost = BusinessBoost()
 
 ---
 
-### 8. `static/js/main.js` - Client-Side JavaScript
+### 7. `static/js/main.js` - Client-Side JavaScript
 
 **Purpose**: Interactive features and API calls.
 
