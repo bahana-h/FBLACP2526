@@ -21,8 +21,8 @@
     --radius: 0.5rem;
     --radius-lg: 0.75rem;
     /* Fonts: large/display = Lazydog, medium = Architects Daughter, small = The Smile (Canva-style) */
-    --font-display: "Lazydog", cursive;
-    --font-body: "Architects Daughter", cursive;
+    --font-display: "Lazydog", "Architects Daughter";
+    --font-body: "Architects Daughter", serif;
     --font-small: "The Smile", sans-serif;
 }
 

@@ -44,9 +44,9 @@
   --border: #e2e8f0;
   --radius: 12px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  /* Chrysalis Connect: try Lazy Dog (direct CDN + self-host), CDN names, then cursive */
-  --font-display: "Lazy Dog", "Lazy Dog Fallback", "Lazydog", "lazy_dog", cursive;
-  --font-body: "Architects Daughter", cursive;
+  /* Lazy Dog for display; Architects Daughter for body; The Smile for small */
+  --font-display: "Lazy Dog", "Lazy Dog Fallback", "Lazydog", "lazy_dog", "Architects Daughter";
+  --font-body: "Architects Daughter", serif;
   --font-small: "The Smile", sans-serif;
 }
 
