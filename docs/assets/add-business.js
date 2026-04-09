@@ -4,13 +4,13 @@
   var captchaInput = document.getElementById("captchaInput");
   var formError = document.getElementById("formError");
 
-    var captchaA = Math.floor(Math.random() * 10) + 1;
+  var captchaA = Math.floor(Math.random() * 10) + 1;
   var captchaB = Math.floor(Math.random() * 10) + 1;
   var captchaAnswer = String(captchaA + captchaB);
 
   if (captchaLabel) captchaLabel.textContent = "Verification: What is " + captchaA + " + " + captchaB + "? *";
 
-    function getStored() {
+  function getStored() {
     try {
       var raw = localStorage.getItem("cc-data");
       if (!raw) return { businesses: [], favorites: [] };
@@ -21,11 +21,11 @@
     }
   }
 
-    function setStored(data) {
+  function setStored(data) {
     localStorage.setItem("cc-data", JSON.stringify(data));
   }
 
-    function showError(msg) {
+  function showError(msg) {
     if (formError) {
       formError.textContent = msg || "";
       formError.style.display = msg ? "block" : "none";
@@ -37,7 +37,7 @@
       e.preventDefault();
       showError("");
 
-            var name = document.getElementById("bizName").value.trim();
+      var name = document.getElementById("bizName").value.trim();
       var category = (document.getElementById("bizCategory").value || "food").toLowerCase();
       var address = document.getElementById("bizAddress").value.trim();
       var phone = (document.getElementById("bizPhone").value || "").trim();
@@ -47,7 +47,7 @@
       var dealExpires = (document.getElementById("dealExpires").value || "").trim();
       var userCaptcha = (captchaInput && captchaInput.value || "").trim();
 
-            if (!name) {
+      if (!name) {
         showError("Please enter a business name.");
         return;
       }
@@ -60,7 +60,7 @@
         return;
       }
 
-            var deals = [];
+      var deals = [];
       if (dealTitle) {
         deals.push({ title: dealTitle, description: dealDesc, expires: dealExpires });
       }
@@ -80,7 +80,7 @@
       stored.businesses.push(newBiz);
       setStored(stored);
 
-            window.location.href = "index.html#directory";
+      window.location.href = "index.html#directory";
     });
   }
 })();

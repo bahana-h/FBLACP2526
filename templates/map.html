@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Map - Chrysalis Connect{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-map-marked-alt"></i> Business Map</h1>
+        <p>Find local businesses on the map. Click a marker for details.</p>
+    </div>
+
+    <div class="map-container">
+        <div id="businessMap" class="business-map"></div>
+        <div class="map-legend">
+            <h3><i class="fas fa-info-circle"></i> Legend</h3>
+            <div class="legend-items">
+                <span class="legend-item"><i class="fas fa-utensils" style="color: #92400e;"></i> Food</span>
+                <span class="legend-item"><i class="fas fa-shopping-bag" style="color: #1e40af;"></i> Retail</span>
+                <span class="legend-item"><i class="fas fa-tools" style="color: #065f46;"></i> Services</span>
+            </div>
+        </div>
+    </div>
+
+    {% if not markers %}
+    <div class="map-empty">
+        <i class="fas fa-map-pin"></i>
+        <p>No businesses with location data yet. <a href="{{ url_for('directory') }}">Browse the directory</a> or add businesses with addresses.</p>
+    </div>
+    {% endif %}
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const markers = {{ markers | tojson | safe }};
+    if (!markers || markers.length === 0) return;
+
+    const map = L.map('businessMap').setView([37.7749, -122.4194], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    const categoryColors = { food: '#92400e', retail: '#1e40af', services: '#065f46' };
+    const categoryIcons = { food: 'fa-utensils', retail: 'fa-shopping-bag', services: 'fa-tools' };
+    const bounds = L.latLngBounds();
+
+    markers.forEach(function(m) {
+        const color = categoryColors[m.category] || '#6366f1';
+        const icon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div class="marker-pin" style="background:' + color + '"><i class="fas ' + (categoryIcons[m.category] || 'fa-store') + '"></i></div>',
+            iconSize: [36, 36],
+            iconAnchor: [18, 36]
+        });
+        const marker = L.marker([m.lat, m.lng], { icon: icon }).addTo(map);
+        bounds.extend([m.lat, m.lng]);
+
+        let popupContent = '<div class="map-popup">';
+        popupContent += '<strong><a href="' + m.url + '">' + escapeHtml(m.name) + '</a></strong>';
+        popupContent += '<p class="map-popup-address"><i class="fas fa-map-marker-alt"></i> ' + escapeHtml(m.address) + '</p>';
+        if (m.review_count > 0) {
+            popupContent += '<p class="map-popup-rating"><i class="fas fa-star"></i> ' + m.rating.toFixed(1) + ' (' + m.review_count + ' reviews)</p>';
+        }
+        popupContent += '<a href="' + m.url + '" class="btn btn-primary btn-sm">View Details</a>';
+        popupContent += '</div>';
+        marker.bindPopup(popupContent);
+    });
+
+    if (markers.length > 1) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+    } else if (markers.length === 1) {
+        map.setZoom(14);
+    }
+
+    function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+})();
+</script>
+<style>
+.business-map { height: 480px; border-radius: 0.75rem; border: 1px solid var(--border-color); }
+.map-container { position: relative; margin-bottom: 2rem; }
+.map-legend { position: absolute; top: 1rem; right: 1rem; background: white; padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: var(--shadow-md); z-index: 1000; }
+.map-legend h3 { font-size: 0.875rem; margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; }
+.legend-items { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8125rem; color: var(--text-secondary); }
+.custom-marker { background: none !important; border: none !important; }
+.marker-pin { width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; box-shadow: var(--shadow-md); }
+.marker-pin i { transform: rotate(45deg); }
+.map-popup { min-width: 200px; padding: 0.25rem; }
+.map-popup strong a { color: var(--primary-color); text-decoration: none; }
+.map-popup-address, .map-popup-rating { margin: 0.5rem 0; font-size: 0.875rem; color: var(--text-secondary); }
+.map-popup .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; margin-top: 0.5rem; }
+.map-empty { text-align: center; padding: 3rem; background: var(--bg-secondary); border-radius: 0.75rem; color: var(--text-secondary); }
+.map-empty i { font-size: 3rem; margin-bottom: 1rem; color: var(--border-color); }
+</style>
+{% endblock %}

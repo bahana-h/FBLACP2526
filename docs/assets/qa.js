@@ -1,5 +1,5 @@
 (function () {
-    var knowledge = [
+  var knowledge = [
     {
       keywords: ["add business", "add a business", "new business", "submit business", "create business", "list a business"],
       question: "How do I add a business?",
@@ -82,11 +82,11 @@
     }
   ];
 
-    function normalize(s) {
+  function normalize(s) {
     return (s || "").toLowerCase().trim().replace(/\s+/g, " ");
   }
 
-    function scoreMatch(input, item) {
+  function scoreMatch(input, item) {
     var n = normalize(input);
     var q = normalize(item.question);
     var score = 0;
@@ -112,7 +112,7 @@
     return score;
   }
 
-    function getAnswers(input) {
+  function getAnswers(input) {
     if (!input || normalize(input).length < 2) return [];
     var scored = knowledge.map(function (item) {
       return { item: item, score: scoreMatch(input, item) };
@@ -121,7 +121,7 @@
     return scored.slice(0, 3).map(function (x) { return x.item; });
   }
 
-    function renderResults(items) {
+  function renderResults(items) {
     if (!items.length) {
       return "<div class=\"qa-result-card qa-no-match\">" +
         "<p>I couldn't find a direct match. Try rephrasing or use one of the suggested questions below. You can also open <strong>Help</strong> on the main page for a full guide.</p>" +
@@ -135,7 +135,7 @@
     }).join("");
   }
 
-    function escapeHtml(s) {
+  function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
@@ -149,19 +149,19 @@
 
   if (!inputEl || !resultsEl) return;
 
-    function showResults(html) {
+  function showResults(html) {
     placeholder.style.display = "none";
     resultsEl.hidden = false;
     resultsEl.innerHTML = html;
   }
 
-    function showPlaceholder() {
+  function showPlaceholder() {
     placeholder.style.display = "block";
     resultsEl.hidden = true;
     resultsEl.innerHTML = "";
   }
 
-    function ask() {
+  function ask() {
     var q = inputEl.value.trim();
     if (!q) {
       showPlaceholder();
@@ -176,7 +176,7 @@
     if (e.key === "Enter") ask();
   });
 
-    if (suggestedEl) {
+  if (suggestedEl) {
     var suggested = knowledge.slice(0, 8);
     suggestedEl.innerHTML = suggested.map(function (item) {
       return "<button type=\"button\" class=\"qa-suggested-btn\">" + escapeHtml(item.question) + "</button>";

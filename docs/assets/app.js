@@ -16,15 +16,15 @@ const sampleBusinesses = [
 ];
 
 const state = {
-  businesses: [],           // All loaded businesses (from OSM search, sample data, or localStorage)
-  favorites: new Set(),     // Business IDs the user has favorited (persisted in cc-data)
+  businesses: [],
+  favorites: new Set(),
   filters: { search: "", category: "", sort: "name" },
-  currentLocation: null,    // { latitude, longitude } or string; used for re-search when filters change
-  loading: false,           // True while fetching from Overpass/Nominatim
-  view: ""                  // "" = directory, "favorites", or "recommendations"
+  currentLocation: null,
+  loading: false,
+  view: "" // "", "favorites", "recommendations"
 };
 
-const els = {};             // Cached DOM references (e.g. businessList) filled in init()
+const els = {};
 
 function qs(id) {
   return document.getElementById(id);
@@ -151,7 +151,6 @@ function showBackendStatus() {
   }
   showStatus(`Shared reviews: ON (${baseUrl})`, "success");
 }
-
 
 
 
@@ -401,7 +400,6 @@ function showStatus(message, type = 'info') {
   }
 }
 
-
 function loadState() {
   const stored = localStorage.getItem("cc-data");
   if (stored) {
@@ -444,7 +442,6 @@ function totalReviews(biz) {
   }
   return biz.reviews?.length || 0;
 }
-
 
 function renderStats() {
   qs("statBusinesses").textContent = state.businesses.length;
@@ -851,7 +848,6 @@ function addBusinessFlow() {
   buildCategories();
   render();
 }
-
 
 function bindEvents() {
   qs("applyFilters").addEventListener("click", () => {

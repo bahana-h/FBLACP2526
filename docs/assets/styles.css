@@ -1,12 +1,6 @@
-/* Chrysalis Connect (Static) - Butterfly Theme */
 
-/*
- * Lazy Dog font options (https://www.dafont.com/lazy-dog.font):
- * 1) Direct WOFF from CDN Fonts (below) - works if CDN allows GitHub Pages
- * 2) CDN stylesheet - already linked in index.html (lazydog-2)
- * 3) Self-host: save lazy_dog.ttf from DaFont into docs/assets/fonts/
- * 4) After pushing font to repo: jsDelivr serves it (see second @font-face)
- */
+
+
 @font-face {
   font-family: "Lazy Dog";
   src: url("https://fonts.cdnfonts.com/s/81121/lazy_dog.woff") format("woff"),
@@ -16,7 +10,7 @@
   font-display: swap;
 }
 
-/* If you add lazy_dog.ttf to docs/assets/fonts/ and push, jsDelivr will serve it (replace USER/REPO with your repo) */
+
 @font-face {
   font-family: "Lazy Dog Fallback";
   src: url("https://cdn.jsdelivr.net/gh/bahana-h/FBLACP2526@main/docs/assets/fonts/lazy_dog.ttf") format("truetype");
@@ -25,16 +19,13 @@
   font-display: swap;
 }
 
-/* -----------------------------------------------------------------------------
-   Design tokens: colors, typography, spacing. Used across all pages.
-   ----------------------------------------------------------------------------- */
 :root {
-  /* Theme palette: royal blue + red-spotted purple butterfly */
-  --royal: #1d4ed8;         /* royal blue */
+  
+  --royal: #1d4ed8;         
   --royal-dark: #1e40af;
-  --purple: #7c3aed;        /* vivid purple */
+  --purple: #7c3aed;        
   --purple-dark: #5b21b6;
-  --spot: #ef4444;          /* red spots */
+  --spot: #ef4444;          
   --primary: var(--royal);
   --primary-dark: var(--royal-dark);
   --secondary: var(--purple);
@@ -47,13 +38,12 @@
   --border: #e2e8f0;
   --radius: 12px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  /* Lazy Dog for display; Architects Daughter for body; The Smile for small */
+  
   --font-display: "Lazy Dog", "Lazy Dog Fallback", "Lazydog", "lazy_dog", "Architects Daughter";
   --font-body: "Architects Daughter", serif;
   --font-small: "The Smile", sans-serif;
 }
 
-/* Base layout: full-width body, centered content container. */
 * {
   box-sizing: border-box;
 }
@@ -71,7 +61,6 @@ body {
   margin: 0 auto;
 }
 
-/* Navbar: sticky gradient bar, brand + action buttons. */
 .navbar {
   background: linear-gradient(135deg, var(--royal), var(--purple));
   color: #fff;
@@ -82,7 +71,7 @@ body {
   box-shadow: var(--shadow);
 }
 
-/* Landing (3D scene) */
+
 .landing {
   padding: 44px 0 14px;
   background:
@@ -268,7 +257,7 @@ body {
   .scene3d { height: 200px; }
 }
 
-/* Fractional stars (CSS meter) */
+
 .stars-meter {
   --rating: 0;
   --percent: calc(var(--rating) / 5 * 100%);
@@ -290,7 +279,7 @@ body {
   top: 0;
   width: var(--percent);
   overflow: hidden;
-  color: #fbbf24; /* gold */
+  color: #fbbf24; 
   text-shadow: 0 0 12px rgba(251, 191, 36, 0.18);
 }
 
@@ -331,7 +320,6 @@ body {
   font-family: var(--font-body);
 }
 
-/* Hero / directory section: title, location search, stats, filters, business list. */
 .hero {
   padding: 48px 0 32px;
 }
@@ -362,7 +350,6 @@ body {
   color: var(--muted);
 }
 
-/* Location search: input, Use My Location, status message. */
 .location-selector {
   margin: 16px 0;
   padding: 16px;
@@ -479,7 +466,6 @@ body {
   font-weight: 700;
 }
 
-/* Filters: search, category dropdown, sort, Apply button, category pills. */
 .filters-card {
   background: var(--card);
   border-radius: var(--radius);
@@ -565,7 +551,6 @@ select:focus {
   margin: 18px 0 32px;
 }
 
-/* Business cards in the directory list: title, category badge, address, rating, deals, favorite, Details. */
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -687,7 +672,7 @@ select:focus {
 
 .modal.open { display: flex; }
 
-/* Map section */
+
 .map-section {
   margin-top: 2rem;
   padding-top: 2rem;
@@ -756,9 +741,8 @@ select:focus {
 .map-empty-msg a { color: var(--primary); text-decoration: none; }
 .map-empty-msg a:hover { text-decoration: underline; }
 
-/* Map page (standalone) */
+
 .map-page-main { padding: 2rem 0 3rem; }
-/* Map page (map.html): header and Leaflet popup styling for business markers. */
 .map-page-header { text-align: center; margin-bottom: 1.5rem; }
 .map-page-header h1 { font-family: var(--font-display); font-size: 1.75rem; margin: 0 0 0.5rem; }
 .map-page-header p { margin: 0; color: var(--muted); font-family: var(--font-body); }
@@ -785,8 +769,7 @@ select:focus {
 .map-popup .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; margin-top: 0.5rem; cursor: pointer; font-family: var(--font-body); }
 .map-popup .map-popup-btn { border: none; border-radius: 8px; background: var(--primary); color: #fff; }
 
-/* Help modal */
-/* Help modal (main page): "How to Use Chrysalis Connect" overlay. */
+
 .help-modal-content {
   max-width: 560px;
 }
@@ -840,7 +823,6 @@ select:focus {
   font-size: 18px;
 }
 
-/* Business detail modal: header, meta, deals, similar businesses, reviews, Add Review form. */
 .detail-header {
   display: flex;
   justify-content: space-between;
@@ -955,10 +937,7 @@ select:focus {
   .btn { width: 100%; justify-content: center; }
 }
 
-/* -----------------------------------------------------------------------------
-   Q&A page (qa.html): header, input card, results, suggested questions.
-   ----------------------------------------------------------------------------- */
-/* Q&A page: use Architects Daughter for all text (including nav brand) */
+
 .qa-page .nav-brand,
 .qa-page .nav-brand-link { font-family: var(--font-body); }
 .qa-main { padding: 2rem 0 3rem; }
@@ -1006,10 +985,7 @@ select:focus {
 .qa-suggested-btn:hover { background: #eef2ff; border-color: var(--primary); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 
-/* Add Business page */
-/* -----------------------------------------------------------------------------
-   Add Business page (add-business.html): form layout and field styling.
-   ----------------------------------------------------------------------------- */
+
 .add-business-main { padding: 2rem 0 3rem; max-width: 640px; margin: 0 auto; }
 .add-business-main h1 { font-family: var(--font-display); font-size: 1.75rem; margin: 0 0 1rem; }
 .form-card {
@@ -1041,10 +1017,7 @@ select:focus {
 .report-table { width: 100%; border-collapse: collapse; font-family: var(--font-body); font-size: 0.9375rem; }
 .report-table th, .report-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
 .report-table th { background: var(--bg); font-weight: 700; color: var(--primary); }
-/* -----------------------------------------------------------------------------
-   Reports page (reports.html): title, toolbar (category/sort), summary stat boxes, table.
-   ----------------------------------------------------------------------------- */
-/* Reports page: use Architects Daughter for all text (including nav brand) */
+
 .reports-page .nav-brand,
 .reports-page .nav-brand-link { font-family: var(--font-body); }
 .reports-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 1rem; }
@@ -1053,7 +1026,6 @@ select:focus {
 .reports-toolbar select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-family: var(--font-body); }
 #printArea { padding: 1rem 0; }
 
-/* Print: hide nav, toolbar, and buttons; show only report content for clean printing. */
 @media print {
   .navbar, .reports-toolbar, .btn, .add-business-main .btn { display: none !important; }
   body { background: #fff; }

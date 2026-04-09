@@ -1,5 +1,5 @@
 (function () {
-    function getStored() {
+  function getStored() {
     try {
       var raw = localStorage.getItem("cc-data");
       if (!raw) return { businesses: [], favorites: [] };
@@ -9,18 +9,18 @@
     }
   }
 
-    function averageRating(biz) {
+  function averageRating(biz) {
     if (typeof biz.rating === "number" && biz.rating > 0) return biz.rating;
     if (!biz.reviews || !biz.reviews.length) return 0;
     return biz.reviews.reduce(function (s, r) { return s + (r.rating || 0); }, 0) / biz.reviews.length;
   }
 
-    function totalReviews(biz) {
+  function totalReviews(biz) {
     if (biz.review_count !== undefined) return (biz.review_count || 0) + (biz.reviews && biz.reviews.length || 0);
     return (biz.reviews && biz.reviews.length) || 0;
   }
 
-    function buildReport() {
+  function buildReport() {
     var category = (document.getElementById("reportCategory") && document.getElementById("reportCategory").value) || "";
     var sort = (document.getElementById("reportSort") && document.getElementById("reportSort").value) || "name";
     var stored = getStored();
@@ -70,17 +70,17 @@
       "<tbody>" + rows + "</tbody></table>";
   }
 
-    function escapeHtml(s) {
+  function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
   }
 
-    function printReport() {
+  function printReport() {
     window.print();
   }
 
-    function downloadReport() {
+  function downloadReport() {
     var category = document.getElementById("reportCategory") && document.getElementById("reportCategory").value;
     var sort = document.getElementById("reportSort") && document.getElementById("reportSort").value;
     var stored = getStored();
@@ -113,7 +113,7 @@
   }
 
   buildReport();
-    var refreshBtn = document.getElementById("reportRefresh");
+  var refreshBtn = document.getElementById("reportRefresh");
   if (refreshBtn) refreshBtn.addEventListener("click", buildReport);
   var catSelect = document.getElementById("reportCategory");
   var sortSelect = document.getElementById("reportSort");

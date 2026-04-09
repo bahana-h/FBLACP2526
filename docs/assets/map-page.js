@@ -1,5 +1,5 @@
 (function () {
-    function getBusinesses() {
+  function getBusinesses() {
     try {
       const raw = localStorage.getItem("cc-data");
       if (!raw) return [];
@@ -10,7 +10,7 @@
     }
   }
 
-    function averageRating(biz) {
+  function averageRating(biz) {
     if (typeof biz.rating === "number" && biz.rating > 0) return biz.rating;
     if (!biz.reviews || !biz.reviews.length) return 0;
     return biz.reviews.reduce(function (sum, r) {
@@ -18,12 +18,12 @@
     }, 0) / biz.reviews.length;
   }
 
-    function totalReviews(biz) {
+  function totalReviews(biz) {
     if (biz.review_count !== undefined) return (biz.review_count || 0) + (biz.reviews && biz.reviews.length || 0);
     return (biz.reviews && biz.reviews.length) || 0;
   }
 
-    function escapeHtml(s) {
+  function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
@@ -34,7 +34,7 @@
   if (!container) return;
 
   var businesses = getBusinesses();
-    var withLocation = businesses.filter(function (b) {
+  var withLocation = businesses.filter(function (b) {
     return b.latitude != null && b.longitude != null &&
       Number.isFinite(b.latitude) && Number.isFinite(b.longitude);
   });
@@ -43,8 +43,9 @@
 
   if (withLocation.length === 0) return;
 
-  if (typeof L === "undefined") return;  
-    var defaultCenter = withLocation.length === 1
+  if (typeof L === "undefined") return;
+
+  var defaultCenter = withLocation.length === 1
     ? [withLocation[0].latitude, withLocation[0].longitude]
     : [37.7749, -122.4194];
   var zoom = withLocation.length === 1 ? 14 : 12;
@@ -58,7 +59,7 @@
   var categoryIcons = { food: "fa-utensils", retail: "fa-shopping-bag", services: "fa-tools" };
   var bounds = L.latLngBounds();
 
-    withLocation.forEach(function (biz) {
+  withLocation.forEach(function (biz) {
     var color = categoryColors[biz.category] || "#6366f1";
     var icon = L.divIcon({
       className: "custom-marker",
