@@ -25,6 +25,11 @@ const state = {
 };
 
 const els = {};
+const OVERPASS_PRIMARY_RADIUS = 1200;
+const OVERPASS_FALLBACK_RADIUS = 700;
+const OVERPASS_TIMEOUT_SEC = 18;
+const OVERPASS_REQUEST_TIMEOUT_MS = 20000;
+const MAX_OSM_RESULTS = 120;
 
 function qs(id) {
   return document.getElementById(id);
@@ -198,7 +203,7 @@ async function searchBusinesses(location) {
 
   try {
     let lat, lon;
-    
+
     if (typeof location === 'string') {
       const coords = await geocodeLocation(location);
       if (!coords) {
@@ -211,34 +216,15 @@ async function searchBusinesses(location) {
       lon = location.longitude;
     }
 
-    const radius = 2000; // 2km in meters
     const categoryTags = getOSMCategoryTags();
-    
-    const query = `
-      [out:json][timeout:25];
-      (
-        node["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
-        node["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
-        way["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
-        way["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
-      );
-      out center meta;
-    `;
-
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `data=${encodeURIComponent(query)}`
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
+    let data;
+    try {
+      data = await fetchOverpassData(categoryTags, lat, lon, OVERPASS_PRIMARY_RADIUS);
+    } catch (firstError) {
+      showStatus("API is busy. Retrying with a smaller search area...", "info");
+      data = await fetchOverpassData(categoryTags, lat, lon, OVERPASS_FALLBACK_RADIUS);
     }
 
-    const data = await response.json();
-    
     if (!data.elements || data.elements.length === 0) {
       showStatus("No businesses found. Try a different location or add businesses manually!", "info");
       state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
@@ -249,6 +235,7 @@ async function searchBusinesses(location) {
       return;
     }
 
+    const seenIds = new Set();
     const nextBusinesses = data.elements
       .filter(element => element.tags && element.tags.name) // Only include named places
       .map(element => {
@@ -269,7 +256,13 @@ async function searchBusinesses(location) {
           deals: [],
           reviews: []
         };
-      });
+      })
+      .filter(biz => {
+        if (seenIds.has(biz.id)) return false;
+        seenIds.add(biz.id);
+        return true;
+      })
+      .slice(0, MAX_OSM_RESULTS);
 
     state.businesses = mergeLocalReviewsInto(nextBusinesses);
     showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
@@ -291,6 +284,49 @@ async function searchBusinesses(location) {
   }
 }
 
+function buildOverpassQuery(categoryTags, lat, lon, radius) {
+  return `
+    [out:json][timeout:${OVERPASS_TIMEOUT_SEC}];
+    (
+      node["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
+      node["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
+      way["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
+      way["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
+    );
+    out center tags;
+  `;
+}
+
+async function fetchOverpassData(categoryTags, lat, lon, radius) {
+  const query = buildOverpassQuery(categoryTags, lat, lon, radius);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OVERPASS_REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error && error.name === 'AbortError') {
+      throw new Error('API timeout');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function geocodeLocation(locationString) {
   try {
     const response = await fetch(
@@ -301,9 +337,9 @@ async function geocodeLocation(locationString) {
         }
       }
     );
-    
+
     if (!response.ok) return null;
-    
+
     const data = await response.json();
     if (data.length > 0) {
       return {
@@ -320,7 +356,7 @@ async function geocodeLocation(locationString) {
 
 function getOSMCategoryTags() {
   const category = state.filters.category;
-  
+
   if (category === 'food') {
     return {
       shop: 'supermarket|bakery|butcher|confectionery|convenience',
@@ -328,7 +364,7 @@ function getOSMCategoryTags() {
     };
   } else if (category === 'retail') {
     return {
-      shop: '.*', // All shops
+      shop: 'supermarket|convenience|clothes|shoes|electronics|mobile_phone|hardware|books|gift|florist|beauty|jewelry|department_store',
       amenity: 'marketplace|vending_machine'
     };
   } else if (category === 'services') {
@@ -338,7 +374,7 @@ function getOSMCategoryTags() {
     };
   } else {
     return {
-      shop: '.*',
+      shop: 'supermarket|convenience|bakery|clothes|shoes|electronics|mobile_phone|hardware|books|gift|florist|beauty|jewelry|department_store|hairdresser|laundry|car_repair',
       amenity: 'restaurant|cafe|fast_food|bar|pub|bank|pharmacy|post_office|library|marketplace'
     };
   }
@@ -348,16 +384,16 @@ function mapOSMCategory(tags) {
   const shop = tags.shop || '';
   const amenity = tags.amenity || '';
   const combined = `${shop} ${amenity}`.toLowerCase();
-  
-  if (combined.includes('restaurant') || combined.includes('cafe') || 
-      combined.includes('food') || combined.includes('bar') || 
-      combined.includes('pub') || combined.includes('bakery') ||
-      combined.includes('fast_food') || combined.includes('ice_cream')) {
+
+  if (combined.includes('restaurant') || combined.includes('cafe') ||
+    combined.includes('food') || combined.includes('bar') ||
+    combined.includes('pub') || combined.includes('bakery') ||
+    combined.includes('fast_food') || combined.includes('ice_cream')) {
     return 'food';
   }
-  if (combined.includes('shop') || combined.includes('store') || 
-      combined.includes('market') || combined.includes('supermarket') ||
-      combined.includes('retail') || combined.includes('mall')) {
+  if (combined.includes('shop') || combined.includes('store') ||
+    combined.includes('market') || combined.includes('supermarket') ||
+    combined.includes('retail') || combined.includes('mall')) {
     return 'retail';
   }
   return 'services';
@@ -369,11 +405,11 @@ function formatOSMAddress(tags, coords) {
   if (tags['addr:street']) parts.push(tags['addr:street']);
   if (tags['addr:city']) parts.push(tags['addr:city']);
   if (tags['addr:postcode']) parts.push(tags['addr:postcode']);
-  
+
   if (parts.length > 0) {
     return parts.join(' ');
   }
-  
+
   return `Near ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
 }
 
@@ -383,7 +419,7 @@ function buildOSMDescription(tags) {
   if (tags.amenity) parts.push(tags.amenity);
   if (tags.cuisine) parts.push(`${tags.cuisine} cuisine`);
   if (tags.brand) parts.push(tags.brand);
-  
+
   return parts.length > 0 ? parts.join(', ') : 'Local business';
 }
 
@@ -391,7 +427,7 @@ function showStatus(message, type = 'info') {
   const statusEl = qs("locationStatus");
   statusEl.textContent = message;
   statusEl.className = `location-status status-${type}`;
-  
+
   if (type === 'success') {
     setTimeout(() => {
       statusEl.textContent = '';
@@ -411,7 +447,7 @@ function loadState() {
       console.warn("Failed to parse stored data", e);
     }
   }
-  
+
   if (state.businesses.length === 0 && state.currentLocation) {
     setTimeout(() => {
       if (state.placesService) {
@@ -633,9 +669,8 @@ function openDetails(id) {
           <span>${averageRating(biz).toFixed(1)} / 5 (${totalReviews(biz)} reviews)</span>
         </div>
       </div>
-      <button class="btn ghost" id="favToggle"><i class="fas fa-heart"></i> ${
-        state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
-      }</button>
+      <button class="btn ghost" id="favToggle"><i class="fas fa-heart"></i> ${state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
+    }</button>
     </div>
     <div class="detail-meta">
       <div><i class="fas fa-map-marker-alt"></i> ${biz.address}</div>
@@ -648,35 +683,33 @@ function openDetails(id) {
     ${biz.deals?.length ? "<h3>Deals & Coupons</h3>" : ""}
     <div class="deal-list">
       ${biz.deals
-        ?.map(
-          d =>
-            `<div class="deal-card"><strong>${d.title}</strong><div class="helper">${d.description}${
-              d.expires ? ` • Expires: ${d.expires}` : ""
-            }</div></div>`
-        )
-        .join("") || ""}
+      ?.map(
+        d =>
+          `<div class="deal-card"><strong>${d.title}</strong><div class="helper">${d.description}${d.expires ? ` • Expires: ${d.expires}` : ""
+          }</div></div>`
+      )
+      .join("") || ""}
     </div>
     ${similar.length ? `<h3>Similar businesses</h3><div class="similar-list" id="similarList">${similar.map(s => `<button type="button" class="similar-item" data-id="${s.id}"><strong>${s.name}</strong> · ${averageRating(s).toFixed(1)} ★ (${totalReviews(s)} reviews)</button>`).join("")}</div>` : ""}
     <h3>Reviews</h3>
     <div class="reviews">
-      ${
-        biz.reviews && biz.reviews.length
-          ? biz.reviews
-              .slice()
-              .reverse()
-              .map(
-                r =>
-                  `<div class="review">
+      ${biz.reviews && biz.reviews.length
+      ? biz.reviews
+        .slice()
+        .reverse()
+        .map(
+          r =>
+            `<div class="review">
                     <div class="rating-row"><span class="stars">${"★".repeat(r.rating)}${"☆".repeat(
-                    5 - r.rating
-                  )}</span> <strong>${r.user_name}</strong></div>
+              5 - r.rating
+            )}</span> <strong>${r.user_name}</strong></div>
                     <p>${r.comment}</p>
                     <div class="helper">${r.date || ""}</div>
                   </div>`
-              )
-              .join("")
-          : `<div class="empty">No reviews yet. Be the first to review!</div>`
-      }
+        )
+        .join("")
+      : `<div class="empty">No reviews yet. Be the first to review!</div>`
+    }
     </div>
     <h3>Add a Review</h3>
     <div class="form" id="reviewForm">
@@ -722,9 +755,8 @@ function openDetails(id) {
 
   const favToggle = content.querySelector("#favToggle");
   const syncFavBtn = () => {
-    favToggle.innerHTML = `<i class="fas fa-heart"></i> ${
-      state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
-    }`;
+    favToggle.innerHTML = `<i class="fas fa-heart"></i> ${state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
+      }`;
   };
   favToggle.addEventListener("click", () => {
     if (state.favorites.has(biz.id)) state.favorites.delete(biz.id);
