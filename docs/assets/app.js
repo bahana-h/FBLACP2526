@@ -1,4 +1,7 @@
+// Chrysalis Connect (Static) - Real Local Business Finder
+// Uses OpenStreetMap Overpass API - 100% FREE, no API key needed!
 
+// Sample businesses as fallback
 const sampleBusinesses = [
   {
     id: "joescoffee",
@@ -25,11 +28,6 @@ const state = {
 };
 
 const els = {};
-const OVERPASS_PRIMARY_RADIUS = 900;
-const OVERPASS_FALLBACK_RADIUS = 450;
-const OVERPASS_TIMEOUT_SEC = 12;
-const OVERPASS_REQUEST_TIMEOUT_MS = 12000;
-const MAX_OSM_RESULTS = 60;
 
 function qs(id) {
   return document.getElementById(id);
@@ -40,6 +38,8 @@ function clamp(n, min, max) {
 }
 
 function starMeterHTML(rating) {
+  // Render fractional stars using a CSS meter overlay.
+  // Example: rating=4.3 fills 86% of the 5-star bar.
   const r = clamp(Number(rating) || 0, 0, 5);
   return `<span class="stars-meter" style="--rating:${r.toFixed(2)}" aria-label="${r.toFixed(
     1
@@ -47,11 +47,15 @@ function starMeterHTML(rating) {
 }
 
 function mergeLocalReviewsInto(newBusinesses) {
+  // When we re-search Overpass, we rebuild `state.businesses` from scratch.
+  // Without this merge, any locally-stored reviews would appear to "disappear"
+  // because the new objects overwrite the old ones.
   const oldById = new Map((state.businesses || []).map(b => [b.id, b]));
   return newBusinesses.map(b => {
     const old = oldById.get(b.id);
     if (old && Array.isArray(old.reviews) && old.reviews.length) {
       b.reviews = Array.isArray(b.reviews) ? b.reviews : [];
+      // Merge old local reviews first (dedupe by simple signature).
       const seen = new Set(b.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`));
       for (const r of old.reviews) {
         const key = `${r.user_name}|${r.rating}|${r.comment}|${r.date || ""}`;
@@ -65,6 +69,21 @@ function mergeLocalReviewsInto(newBusinesses) {
   });
 }
 
+// =============================================================================
+// Shared reviews across users (GitHub Pages + deployed backend)
+// =============================================================================
+//
+// GitHub Pages is static hosting, so it cannot store shared reviews by itself.
+// To make reviews shared across users/devices, we POST reviews to a backend API.
+//
+// Backend requirements (Flask app):
+// - GET  /api/health
+// - POST /api/shared-reviews/bulk
+// - POST /api/shared-reviews
+//
+// The static site stores the backend URL locally so you only set it once.
+// If no backend is configured, reviews still work locally (localStorage only).
+//
 const BACKEND_URL_KEY = "cc-backend-url";
 
 function getBackendBaseUrl() {
@@ -136,6 +155,7 @@ async function syncSharedReviewsIntoState() {
     if (!Array.isArray(shared) || shared.length === 0) continue;
 
     biz.reviews = Array.isArray(biz.reviews) ? biz.reviews : [];
+    // Dedupe by content only (backend may use different date format than client)
     const seen = new Set(biz.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}`));
 
     for (const r of shared) {
@@ -151,14 +171,17 @@ async function syncSharedReviewsIntoState() {
 function showBackendStatus() {
   const baseUrl = getBackendBaseUrl();
   if (!baseUrl) {
+    // Keep it subtle: local-only mode still works, just not shared.
     showStatus("Shared reviews: OFF (set backend URL in Shared Reviews).", "info");
     return;
   }
   showStatus(`Shared reviews: ON (${baseUrl})`, "success");
 }
 
+// No API key needed - OpenStreetMap is completely free!
 
 
+// Geolocation
 function getCurrentLocation() {
   if (!navigator.geolocation) {
     showStatus("Geolocation is not supported by your browser.", "error");
@@ -167,7 +190,6 @@ function getCurrentLocation() {
 
   showStatus("Getting your location...", "info");
   state.loading = true;
-  render();
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
@@ -180,17 +202,8 @@ function getCurrentLocation() {
       searchBusinesses(location);
     },
     (error) => {
-      const msg = error && error.code === 1
-        ? "Location permission was denied. Please allow location or enter a location manually."
-        : "Could not get your location. Please enter a location manually.";
-      showStatus(msg, "error");
+      showStatus("Could not get your location. Please enter a location manually.", "error");
       state.loading = false;
-      render();
-    },
-    {
-      enableHighAccuracy: false,
-      timeout: 10000,
-      maximumAge: 300000
     }
   );
 }
@@ -207,15 +220,17 @@ function searchByLocationText() {
   searchBusinesses(locationText);
 }
 
+// OpenStreetMap Overpass API Integration - 100% FREE!
 async function searchBusinesses(location) {
   state.loading = true;
   showStatus("Searching for local businesses...", "info");
-  render();
 
   try {
     let lat, lon;
-
+    
+    // Get coordinates from location
     if (typeof location === 'string') {
+      // Geocode the location string first
       const coords = await geocodeLocation(location);
       if (!coords) {
         throw new Error("Could not find location. Please try a more specific address.");
@@ -227,15 +242,36 @@ async function searchBusinesses(location) {
       lon = location.longitude;
     }
 
+    // Build Overpass query to find businesses within 2km radius
+    const radius = 2000; // 2km in meters
     const categoryTags = getOSMCategoryTags();
-    let data;
-    try {
-      data = await fetchOverpassData(categoryTags, lat, lon, OVERPASS_PRIMARY_RADIUS);
-    } catch (firstError) {
-      showStatus("API is busy. Retrying with a smaller search area...", "info");
-      data = await fetchOverpassData(categoryTags, lat, lon, OVERPASS_FALLBACK_RADIUS);
+    
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
+        node["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
+        way["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
+        way["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
+      );
+      out center meta;
+    `;
+
+    // Use Overpass API (free, no key needed)
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `data=${encodeURIComponent(query)}`
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
     }
 
+    const data = await response.json();
+    
     if (!data.elements || data.elements.length === 0) {
       showStatus("No businesses found. Try a different location or add businesses manually!", "info");
       state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
@@ -246,7 +282,7 @@ async function searchBusinesses(location) {
       return;
     }
 
-    const seenIds = new Set();
+    // Transform OpenStreetMap data to our format
     const nextBusinesses = data.elements
       .filter(element => element.tags && element.tags.name) // Only include named places
       .map(element => {
@@ -258,6 +294,8 @@ async function searchBusinesses(location) {
           address: formatOSMAddress(element.tags, center),
           phone: element.tags['phone'] || element.tags['contact:phone'] || 'No phone listed',
           description: buildOSMDescription(element.tags),
+          // OSM doesn't have ratings; we compute average from user reviews.
+          // Leave `rating` undefined so averageRating() falls back to reviews.
           rating: undefined,
           review_count: 0,
           latitude: center.lat,
@@ -267,16 +305,11 @@ async function searchBusinesses(location) {
           deals: [],
           reviews: []
         };
-      })
-      .filter(biz => {
-        if (seenIds.has(biz.id)) return false;
-        seenIds.add(biz.id);
-        return true;
-      })
-      .slice(0, MAX_OSM_RESULTS);
+      });
 
     state.businesses = mergeLocalReviewsInto(nextBusinesses);
     showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
+    // Merge in shared reviews from backend (if configured) before rendering.
     await syncSharedReviewsIntoState();
     saveState();
     buildCategories();
@@ -295,49 +328,7 @@ async function searchBusinesses(location) {
   }
 }
 
-function buildOverpassQuery(categoryTags, lat, lon, radius) {
-  return `
-    [out:json][timeout:${OVERPASS_TIMEOUT_SEC}];
-    (
-      node["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
-      node["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
-      way["shop"~"${categoryTags.shop}"](around:${radius},${lat},${lon});
-      way["amenity"~"${categoryTags.amenity}"](around:${radius},${lat},${lon});
-    );
-    out center tags;
-  `;
-}
-
-async function fetchOverpassData(categoryTags, lat, lon, radius) {
-  const query = buildOverpassQuery(categoryTags, lat, lon, radius);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), OVERPASS_REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (error && error.name === 'AbortError') {
-      throw new Error('API timeout');
-    }
-    throw error;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
+// Geocode location string to coordinates using Nominatim (free)
 async function geocodeLocation(locationString) {
   try {
     const response = await fetch(
@@ -348,9 +339,9 @@ async function geocodeLocation(locationString) {
         }
       }
     );
-
+    
     if (!response.ok) return null;
-
+    
     const data = await response.json();
     if (data.length > 0) {
       return {
@@ -367,7 +358,7 @@ async function geocodeLocation(locationString) {
 
 function getOSMCategoryTags() {
   const category = state.filters.category;
-
+  
   if (category === 'food') {
     return {
       shop: 'supermarket|bakery|butcher|confectionery|convenience',
@@ -375,7 +366,7 @@ function getOSMCategoryTags() {
     };
   } else if (category === 'retail') {
     return {
-      shop: 'supermarket|convenience|clothes|shoes|electronics|mobile_phone|hardware|books|gift|florist|beauty|jewelry|department_store',
+      shop: '.*', // All shops
       amenity: 'marketplace|vending_machine'
     };
   } else if (category === 'services') {
@@ -384,8 +375,9 @@ function getOSMCategoryTags() {
       amenity: 'bank|pharmacy|post_office|library|community_centre|dentist|doctors|veterinary'
     };
   } else {
+    // All categories
     return {
-      shop: 'supermarket|convenience|bakery|clothes|shoes|electronics|mobile_phone|hardware|books|gift|florist|beauty|jewelry|department_store|hairdresser|laundry|car_repair',
+      shop: '.*',
       amenity: 'restaurant|cafe|fast_food|bar|pub|bank|pharmacy|post_office|library|marketplace'
     };
   }
@@ -395,16 +387,16 @@ function mapOSMCategory(tags) {
   const shop = tags.shop || '';
   const amenity = tags.amenity || '';
   const combined = `${shop} ${amenity}`.toLowerCase();
-
-  if (combined.includes('restaurant') || combined.includes('cafe') ||
-    combined.includes('food') || combined.includes('bar') ||
-    combined.includes('pub') || combined.includes('bakery') ||
-    combined.includes('fast_food') || combined.includes('ice_cream')) {
+  
+  if (combined.includes('restaurant') || combined.includes('cafe') || 
+      combined.includes('food') || combined.includes('bar') || 
+      combined.includes('pub') || combined.includes('bakery') ||
+      combined.includes('fast_food') || combined.includes('ice_cream')) {
     return 'food';
   }
-  if (combined.includes('shop') || combined.includes('store') ||
-    combined.includes('market') || combined.includes('supermarket') ||
-    combined.includes('retail') || combined.includes('mall')) {
+  if (combined.includes('shop') || combined.includes('store') || 
+      combined.includes('market') || combined.includes('supermarket') ||
+      combined.includes('retail') || combined.includes('mall')) {
     return 'retail';
   }
   return 'services';
@@ -416,11 +408,12 @@ function formatOSMAddress(tags, coords) {
   if (tags['addr:street']) parts.push(tags['addr:street']);
   if (tags['addr:city']) parts.push(tags['addr:city']);
   if (tags['addr:postcode']) parts.push(tags['addr:postcode']);
-
+  
   if (parts.length > 0) {
     return parts.join(' ');
   }
-
+  
+  // Fallback: use coordinates area
   return `Near ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
 }
 
@@ -430,7 +423,7 @@ function buildOSMDescription(tags) {
   if (tags.amenity) parts.push(tags.amenity);
   if (tags.cuisine) parts.push(`${tags.cuisine} cuisine`);
   if (tags.brand) parts.push(tags.brand);
-
+  
   return parts.length > 0 ? parts.join(', ') : 'Local business';
 }
 
@@ -438,7 +431,7 @@ function showStatus(message, type = 'info') {
   const statusEl = qs("locationStatus");
   statusEl.textContent = message;
   statusEl.className = `location-status status-${type}`;
-
+  
   if (type === 'success') {
     setTimeout(() => {
       statusEl.textContent = '';
@@ -448,6 +441,8 @@ function showStatus(message, type = 'info') {
 }
 
 function loadState() {
+  // Local persistence for the static site.
+  // NOTE: This is device/browser-specific. To share reviews across users, use the Flask site.
   const stored = localStorage.getItem("cc-data");
   if (stored) {
     try {
@@ -458,8 +453,10 @@ function loadState() {
       console.warn("Failed to parse stored data", e);
     }
   }
-
+  
+  // If no businesses loaded and we have location, search
   if (state.businesses.length === 0 && state.currentLocation) {
+    // Wait a bit for Google Maps to load
     setTimeout(() => {
       if (state.placesService) {
         searchBusinesses(state.currentLocation);
@@ -478,12 +475,19 @@ function saveState() {
 }
 
 function averageRating(biz) {
+  // IMPORTANT:
+  // Some sources (like OpenStreetMap) don't provide ratings.
+  // In those cases we should compute the average from user reviews.
+  //
+  // We ONLY treat `biz.rating` as a source-provided rating if it's a positive number.
+  // This prevents the common bug where `rating: 0` blocks the review-based average.
   if (typeof biz.rating === "number" && biz.rating > 0) return biz.rating;
   if (!biz.reviews || !biz.reviews.length) return 0;
   return biz.reviews.reduce((a, r) => a + (r.rating || 0), 0) / biz.reviews.length;
 }
 
 function totalReviews(biz) {
+  // Use Google review count if available
   if (biz.review_count !== undefined) {
     return biz.review_count + (biz.reviews?.length || 0);
   }
@@ -519,6 +523,7 @@ function buildCategories() {
       state.filters.category = state.filters.category === cat ? "" : cat;
       updateFiltersUI();
       render();
+      // Re-search if we have a location
       if (state.currentLocation) {
         searchBusinesses(state.currentLocation);
       }
@@ -680,8 +685,9 @@ function openDetails(id) {
           <span>${averageRating(biz).toFixed(1)} / 5 (${totalReviews(biz)} reviews)</span>
         </div>
       </div>
-      <button class="btn ghost" id="favToggle"><i class="fas fa-heart"></i> ${state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
-    }</button>
+      <button class="btn ghost" id="favToggle"><i class="fas fa-heart"></i> ${
+        state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
+      }</button>
     </div>
     <div class="detail-meta">
       <div><i class="fas fa-map-marker-alt"></i> ${biz.address}</div>
@@ -694,33 +700,35 @@ function openDetails(id) {
     ${biz.deals?.length ? "<h3>Deals & Coupons</h3>" : ""}
     <div class="deal-list">
       ${biz.deals
-      ?.map(
-        d =>
-          `<div class="deal-card"><strong>${d.title}</strong><div class="helper">${d.description}${d.expires ? ` • Expires: ${d.expires}` : ""
-          }</div></div>`
-      )
-      .join("") || ""}
+        ?.map(
+          d =>
+            `<div class="deal-card"><strong>${d.title}</strong><div class="helper">${d.description}${
+              d.expires ? ` • Expires: ${d.expires}` : ""
+            }</div></div>`
+        )
+        .join("") || ""}
     </div>
     ${similar.length ? `<h3>Similar businesses</h3><div class="similar-list" id="similarList">${similar.map(s => `<button type="button" class="similar-item" data-id="${s.id}"><strong>${s.name}</strong> · ${averageRating(s).toFixed(1)} ★ (${totalReviews(s)} reviews)</button>`).join("")}</div>` : ""}
     <h3>Reviews</h3>
     <div class="reviews">
-      ${biz.reviews && biz.reviews.length
-      ? biz.reviews
-        .slice()
-        .reverse()
-        .map(
-          r =>
-            `<div class="review">
+      ${
+        biz.reviews && biz.reviews.length
+          ? biz.reviews
+              .slice()
+              .reverse()
+              .map(
+                r =>
+                  `<div class="review">
                     <div class="rating-row"><span class="stars">${"★".repeat(r.rating)}${"☆".repeat(
-              5 - r.rating
-            )}</span> <strong>${r.user_name}</strong></div>
+                    5 - r.rating
+                  )}</span> <strong>${r.user_name}</strong></div>
                     <p>${r.comment}</p>
                     <div class="helper">${r.date || ""}</div>
                   </div>`
-        )
-        .join("")
-      : `<div class="empty">No reviews yet. Be the first to review!</div>`
-    }
+              )
+              .join("")
+          : `<div class="empty">No reviews yet. Be the first to review!</div>`
+      }
     </div>
     <h3>Add a Review</h3>
     <div class="form" id="reviewForm">
@@ -766,8 +774,9 @@ function openDetails(id) {
 
   const favToggle = content.querySelector("#favToggle");
   const syncFavBtn = () => {
-    favToggle.innerHTML = `<i class="fas fa-heart"></i> ${state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
-      }`;
+    favToggle.innerHTML = `<i class="fas fa-heart"></i> ${
+      state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
+    }`;
   };
   favToggle.addEventListener("click", () => {
     if (state.favorites.has(biz.id)) state.favorites.delete(biz.id);
@@ -778,6 +787,7 @@ function openDetails(id) {
   });
   syncFavBtn();
 
+  // Verification
   const a = Math.floor(Math.random() * 10) + 1;
   const b = Math.floor(Math.random() * 10) + 1;
   const answer = a + b;
@@ -801,6 +811,7 @@ function openDetails(id) {
     };
     biz.reviews.push(newReview);
     saveState();
+    // Attempt to save to shared backend (if configured).
     postSharedReview({
       business_id: biz.id,
       user_name: newReview.user_name,
@@ -808,6 +819,7 @@ function openDetails(id) {
       comment: newReview.comment
     }).then(result => {
       if (result && result.ok === false) {
+        // Still fine: localStorage keeps the review, just not shared.
         console.warn("Shared review save failed:", result.error);
       }
     });
@@ -921,6 +933,7 @@ function bindEvents() {
     });
   }
 
+  // Shared Reviews settings (backend URL)
   const settingsBtn = qs("settingsBtn");
   if (settingsBtn) {
     settingsBtn.addEventListener("click", async () => {
@@ -939,6 +952,7 @@ function bindEvents() {
   }
 
   qs("favoritesBtn").addEventListener("click", showFavorites);
+  // Add Business is now a link to add-business.html (no click handler)
 
   const navHelp = qs("navHelp");
   if (navHelp) navHelp.addEventListener("click", openHelpModal);
@@ -955,6 +969,7 @@ function bindEvents() {
     if (e.target.id === "modal") closeModal();
   });
 
+  // Location events
   qs("useCurrentLocation").addEventListener("click", getCurrentLocation);
   qs("searchLocation").addEventListener("click", searchByLocationText);
   qs("locationInput").addEventListener("keypress", (e) => {
@@ -963,10 +978,12 @@ function bindEvents() {
     }
   });
 
+  // No API key needed - OpenStreetMap is free!
 }
 
 function init() {
   els.list = qs("businessList");
+  // Hide API key banner - not needed with OpenStreetMap
   qs("apiKeyBanner").style.display = "none";
   showBackendStatus();
   loadState();
@@ -974,6 +991,7 @@ function init() {
   bindEvents();
   render();
 
+  // Sync shared reviews from backend on load (so cross-user reviews appear without re-search)
   syncSharedReviewsIntoState().then(() => {
     saveState();
     render();
@@ -982,12 +1000,14 @@ function init() {
   const landingBtn = qs("landingScrollBtn");
   if (landingBtn) {
     landingBtn.addEventListener("click", () => {
+      // Scroll into the directory section, then trigger location flow.
       const el = document.getElementById("directory");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(() => getCurrentLocation(), 350);
     });
   }
 
+  // Open business detail from map page link (index.html#detail=ID)
   const hash = window.location.hash;
   const detailMatch = hash && hash.match(/^#detail=(.+)$/);
   if (detailMatch) {
