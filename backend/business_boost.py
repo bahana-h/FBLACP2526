@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Byte-Sized Business Boost
-A tool to discover and support small, local businesses in your community.
-"""
 
 import json
 import os
@@ -14,7 +10,6 @@ from collections import defaultdict
 
 
 class Business:
-    """Represents a local business."""
     
     def __init__(self, name: str, category: str, address: str, phone: str = "", 
                  description: str = "", deals: List[Dict] = None):
@@ -29,11 +24,9 @@ class Business:
         self.created_at = datetime.now().isoformat()
     
     def _generate_id(self) -> str:
-        """Generate a unique ID for the business."""
         return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     
     def add_review(self, user_name: str, rating: int, comment: str, verified: bool = False):
-        """Add a review to the business."""
         if not 1 <= rating <= 5:
             raise ValueError("Rating must be between 1 and 5")
         
@@ -47,17 +40,14 @@ class Business:
         self.reviews.append(review)
     
     def get_average_rating(self) -> float:
-        """Calculate average rating from all reviews."""
         if not self.reviews:
             return 0.0
         return sum(r["rating"] for r in self.reviews) / len(self.reviews)
     
     def get_review_count(self) -> int:
-        """Get total number of reviews."""
         return len(self.reviews)
     
     def to_dict(self) -> Dict:
-        """Convert business to dictionary for JSON storage."""
         return {
             "id": self.id,
             "name": self.name,
@@ -72,7 +62,6 @@ class Business:
     
     @classmethod
     def from_dict(cls, data: Dict) -> 'Business':
-        """Create a Business instance from dictionary."""
         business = cls(
             name=data["name"],
             category=data["category"],
@@ -88,7 +77,6 @@ class Business:
 
 
 class BusinessBoost:
-    """Main application class for Byte-Sized Business Boost."""
     
     def __init__(self, data_file: str = "business_data.json"):
         self.data_file = data_file
@@ -97,7 +85,6 @@ class BusinessBoost:
         self.load_data()
     
     def load_data(self):
-        """Load businesses and user data from JSON file."""
         if os.path.exists(self.data_file):
             try:
                 with open(self.data_file, 'r') as f:
@@ -109,11 +96,9 @@ class BusinessBoost:
                 self.businesses = []
                 self.user_favorites = {}
         else:
-            # Initialize with sample data
             self._initialize_sample_data()
     
     def save_data(self):
-        """Save businesses and user data to JSON file."""
         data = {
             "businesses": [b.to_dict() for b in self.businesses],
             "user_favorites": self.user_favorites
@@ -122,7 +107,6 @@ class BusinessBoost:
             json.dump(data, f, indent=2)
     
     def _initialize_sample_data(self):
-        """Initialize with sample businesses for demonstration."""
         sample_businesses = [
             Business(
                 name="Joe's Coffee House",
@@ -169,7 +153,6 @@ class BusinessBoost:
         self.save_data()
     
     def verify_user(self) -> bool:
-        """Simple verification to prevent bot activity."""
         num1 = random.randint(1, 10)
         num2 = random.randint(1, 10)
         answer = num1 + num2
@@ -182,7 +165,6 @@ class BusinessBoost:
     
     def add_business(self, name: str, category: str, address: str, phone: str = "", 
                      description: str = "", deals: List[Dict] = None):
-        """Add a new business to the directory."""
         if not self.verify_user():
             print("❌ Verification failed. Please try again.")
             return False
@@ -194,24 +176,19 @@ class BusinessBoost:
         return True
     
     def get_businesses_by_category(self, category: str) -> List[Business]:
-        """Get all businesses in a specific category."""
         return [b for b in self.businesses if b.category.lower() == category.lower()]
     
     def get_all_categories(self) -> List[str]:
-        """Get list of all available categories."""
         categories = set(b.category for b in self.businesses)
         return sorted(categories)
     
     def sort_businesses_by_rating(self, reverse: bool = True) -> List[Business]:
-        """Sort businesses by average rating."""
         return sorted(self.businesses, key=lambda b: b.get_average_rating(), reverse=reverse)
     
     def sort_businesses_by_review_count(self, reverse: bool = True) -> List[Business]:
-        """Sort businesses by number of reviews."""
         return sorted(self.businesses, key=lambda b: b.get_review_count(), reverse=reverse)
     
     def add_review(self, business_id: str, user_name: str, rating: int, comment: str):
-        """Add a review to a business."""
         if not self.verify_user():
             print("❌ Verification failed. Please try again.")
             return False
@@ -231,14 +208,12 @@ class BusinessBoost:
             return False
     
     def find_business_by_id(self, business_id: str) -> Optional[Business]:
-        """Find a business by its ID."""
         for business in self.businesses:
             if business.id == business_id:
                 return business
         return None
     
     def add_to_favorites(self, username: str, business_id: str):
-        """Add a business to user's favorites."""
         if username not in self.user_favorites:
             self.user_favorites[username] = []
         
@@ -250,7 +225,6 @@ class BusinessBoost:
             print("ℹ️  Business is already in your favorites.")
     
     def remove_from_favorites(self, username: str, business_id: str):
-        """Remove a business from user's favorites."""
         if username in self.user_favorites and business_id in self.user_favorites[username]:
             self.user_favorites[username].remove(business_id)
             self.save_data()
@@ -259,7 +233,6 @@ class BusinessBoost:
             print("ℹ️  Business not found in favorites.")
     
     def get_favorites(self, username: str) -> List[Business]:
-        """Get user's favorite businesses."""
         if username not in self.user_favorites:
             return []
         
@@ -267,7 +240,6 @@ class BusinessBoost:
         return [b for b in self.businesses if b.id in favorite_ids]
     
     def display_business(self, business: Business, show_deals: bool = True):
-        """Display business information."""
         print("\n" + "="*60)
         print(f"🏢 {business.name}")
         print("="*60)
@@ -303,7 +275,6 @@ class BusinessBoost:
         print("="*60)
     
     def display_business_list(self, businesses: List[Business], show_index: bool = True):
-        """Display a list of businesses."""
         if not businesses:
             print("\n❌ No businesses found.")
             return
@@ -326,7 +297,6 @@ class BusinessBoost:
 
 
 def main():
-    """Main interactive CLI interface."""
     app = BusinessBoost()
     current_user = None
     
@@ -400,7 +370,6 @@ def main():
         
         elif choice == "4":
             sorted_businesses = app.sort_businesses_by_rating()
-            # Filter out businesses with no reviews
             reviewed = [b for b in sorted_businesses if b.get_review_count() > 0]
             if reviewed:
                 print("\n⭐ TOP RATED BUSINESSES ⭐")
