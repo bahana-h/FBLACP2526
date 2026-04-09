@@ -50,6 +50,12 @@ from recommendations import (
     get_personalized_recommendations, get_trending_businesses,
     get_similar_businesses, smart_filter
 )
+from reviews_store import (
+    is_supabase_configured,
+    get_reviews as store_get_reviews,
+    get_reviews_bulk as store_get_reviews_bulk,
+    add_review as store_add_review,
+)
 
 # Initialize Flask application
 # Flask is a lightweight web framework - perfect for this use case
@@ -271,6 +277,10 @@ def business_detail(business_id):
     if not business:
         flash('Business not found.', 'error')
         return redirect(url_for('index'))
+
+    # When Supabase is configured, always show the latest persisted reviews.
+    if is_supabase_configured():
+        business.reviews = store_get_reviews(business_id)
     
     # Get username from session
     username = session.get('username', '')
@@ -567,7 +577,14 @@ def add_review():
     # Add review to business
     # BusinessBoost handles validation and persistence
     try:
-        if business_boost.add_review(business_id, user_name, rating_int, comment):
+        business = business_boost.find_business_by_id(business_id)
+        if not business:
+            flash('Failed to add review. Business may not exist.', 'error')
+        elif is_supabase_configured():
+            store_add_review(business_id, user_name, rating_int, comment, verified=True)
+            business.reviews = store_get_reviews(business_id)
+            flash('Review added successfully!', 'success')
+        elif business_boost.add_review(business_id, user_name, rating_int, comment):
             flash('Review added successfully!', 'success')
         else:
             flash('Failed to add review. Business may not exist.', 'error')
@@ -890,7 +907,11 @@ def foursquare_places():
 @app.route("/api/health", methods=["GET"])
 def api_health():
     """Simple health check endpoint for the static site."""
-    resp = jsonify({"ok": True, "service": "chrysalis-connect-backend"})
+    resp = jsonify({
+        "ok": True,
+        "service": "chrysalis-connect-backend",
+        "supabase_configured": is_supabase_configured(),
+    })
     return _corsify(resp)
 
 
@@ -913,8 +934,7 @@ def shared_reviews_bulk():
     if not isinstance(business_ids, list) or not all(isinstance(x, str) for x in business_ids):
         return _corsify(jsonify({"error": "business_ids must be a list of strings."})), 400
 
-    data = load_shared_reviews()
-    out = {bid: data.get(bid, []) for bid in business_ids}
+    out = store_get_reviews_bulk(business_ids)
     return _corsify(jsonify({"reviews_by_id": out}))
 
 
@@ -963,23 +983,15 @@ def shared_reviews_add():
     if not is_valid:
         return _corsify(jsonify({"error": err or "Invalid comment."})), 400
 
-    data = load_shared_reviews()
-    reviews = data.get(business_id, [])
-    if not isinstance(reviews, list):
-        reviews = []
-
-    review = {
-        "user_name": user_name,
-        "rating": rating_int,
-        "comment": comment,
-        "verified": verified,
-        "date": datetime.now().isoformat(),
-    }
-    reviews.append(review)
-    data[business_id] = reviews
-    save_shared_reviews(data)
-
-    return _corsify(jsonify({"ok": True, "review": review, "review_count": len(reviews)}))
+    review = store_add_review(
+        business_id=business_id,
+        user_name=user_name,
+        rating=rating_int,
+        comment=comment,
+        verified=verified,
+    )
+    review_count = len(store_get_reviews(business_id))
+    return _corsify(jsonify({"ok": True, "review": review, "review_count": review_count}))
 
 
 @app.errorhandler(404)

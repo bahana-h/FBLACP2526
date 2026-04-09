@@ -15,6 +15,12 @@ import json
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 # Optional Supabase client (only used when env is set)
 _supabase = None
 
@@ -25,7 +31,11 @@ def _get_supabase():
     if _supabase is not None:
         return _supabase
     url = os.getenv("SUPABASE_URL", "").strip()
-    key = os.getenv("SUPABASE_KEY", "").strip() or os.getenv("SUPABASE_ANON_KEY", "").strip()
+    key = (
+        os.getenv("SUPABASE_KEY", "").strip()
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        or os.getenv("SUPABASE_ANON_KEY", "").strip()
+    )
     if not url or not key:
         return None
     try:
