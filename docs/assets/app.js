@@ -190,6 +190,7 @@ function getCurrentLocation() {
 
   showStatus("Getting your location...", "info");
   state.loading = true;
+  render();
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
@@ -204,6 +205,7 @@ function getCurrentLocation() {
     (error) => {
       showStatus("Could not get your location. Please enter a location manually.", "error");
       state.loading = false;
+      render();
     }
   );
 }
@@ -224,10 +226,11 @@ function searchByLocationText() {
 async function searchBusinesses(location) {
   state.loading = true;
   showStatus("Searching for local businesses...", "info");
+  render();
 
   try {
     let lat, lon;
-    
+
     // Get coordinates from location
     if (typeof location === 'string') {
       // Geocode the location string first
@@ -245,7 +248,7 @@ async function searchBusinesses(location) {
     // Build Overpass query to find businesses within 2km radius
     const radius = 2000; // 2km in meters
     const categoryTags = getOSMCategoryTags();
-    
+
     const query = `
       [out:json][timeout:25];
       (
@@ -271,7 +274,7 @@ async function searchBusinesses(location) {
     }
 
     const data = await response.json();
-    
+
     if (!data.elements || data.elements.length === 0) {
       showStatus("No businesses found. Try a different location or add businesses manually!", "info");
       state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
@@ -339,9 +342,9 @@ async function geocodeLocation(locationString) {
         }
       }
     );
-    
+
     if (!response.ok) return null;
-    
+
     const data = await response.json();
     if (data.length > 0) {
       return {
@@ -358,7 +361,7 @@ async function geocodeLocation(locationString) {
 
 function getOSMCategoryTags() {
   const category = state.filters.category;
-  
+
   if (category === 'food') {
     return {
       shop: 'supermarket|bakery|butcher|confectionery|convenience',
@@ -387,16 +390,16 @@ function mapOSMCategory(tags) {
   const shop = tags.shop || '';
   const amenity = tags.amenity || '';
   const combined = `${shop} ${amenity}`.toLowerCase();
-  
-  if (combined.includes('restaurant') || combined.includes('cafe') || 
-      combined.includes('food') || combined.includes('bar') || 
-      combined.includes('pub') || combined.includes('bakery') ||
-      combined.includes('fast_food') || combined.includes('ice_cream')) {
+
+  if (combined.includes('restaurant') || combined.includes('cafe') ||
+    combined.includes('food') || combined.includes('bar') ||
+    combined.includes('pub') || combined.includes('bakery') ||
+    combined.includes('fast_food') || combined.includes('ice_cream')) {
     return 'food';
   }
-  if (combined.includes('shop') || combined.includes('store') || 
-      combined.includes('market') || combined.includes('supermarket') ||
-      combined.includes('retail') || combined.includes('mall')) {
+  if (combined.includes('shop') || combined.includes('store') ||
+    combined.includes('market') || combined.includes('supermarket') ||
+    combined.includes('retail') || combined.includes('mall')) {
     return 'retail';
   }
   return 'services';
@@ -408,11 +411,11 @@ function formatOSMAddress(tags, coords) {
   if (tags['addr:street']) parts.push(tags['addr:street']);
   if (tags['addr:city']) parts.push(tags['addr:city']);
   if (tags['addr:postcode']) parts.push(tags['addr:postcode']);
-  
+
   if (parts.length > 0) {
     return parts.join(' ');
   }
-  
+
   // Fallback: use coordinates area
   return `Near ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
 }
@@ -423,7 +426,7 @@ function buildOSMDescription(tags) {
   if (tags.amenity) parts.push(tags.amenity);
   if (tags.cuisine) parts.push(`${tags.cuisine} cuisine`);
   if (tags.brand) parts.push(tags.brand);
-  
+
   return parts.length > 0 ? parts.join(', ') : 'Local business';
 }
 
@@ -431,7 +434,7 @@ function showStatus(message, type = 'info') {
   const statusEl = qs("locationStatus");
   statusEl.textContent = message;
   statusEl.className = `location-status status-${type}`;
-  
+
   if (type === 'success') {
     setTimeout(() => {
       statusEl.textContent = '';
@@ -453,7 +456,7 @@ function loadState() {
       console.warn("Failed to parse stored data", e);
     }
   }
-  
+
   // If no businesses loaded and we have location, search
   if (state.businesses.length === 0 && state.currentLocation) {
     // Wait a bit for Google Maps to load
@@ -685,9 +688,8 @@ function openDetails(id) {
           <span>${averageRating(biz).toFixed(1)} / 5 (${totalReviews(biz)} reviews)</span>
         </div>
       </div>
-      <button class="btn ghost" id="favToggle"><i class="fas fa-heart"></i> ${
-        state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
-      }</button>
+      <button class="btn ghost" id="favToggle"><i class="fas fa-heart"></i> ${state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
+    }</button>
     </div>
     <div class="detail-meta">
       <div><i class="fas fa-map-marker-alt"></i> ${biz.address}</div>
@@ -700,35 +702,33 @@ function openDetails(id) {
     ${biz.deals?.length ? "<h3>Deals & Coupons</h3>" : ""}
     <div class="deal-list">
       ${biz.deals
-        ?.map(
-          d =>
-            `<div class="deal-card"><strong>${d.title}</strong><div class="helper">${d.description}${
-              d.expires ? ` • Expires: ${d.expires}` : ""
-            }</div></div>`
-        )
-        .join("") || ""}
+      ?.map(
+        d =>
+          `<div class="deal-card"><strong>${d.title}</strong><div class="helper">${d.description}${d.expires ? ` • Expires: ${d.expires}` : ""
+          }</div></div>`
+      )
+      .join("") || ""}
     </div>
     ${similar.length ? `<h3>Similar businesses</h3><div class="similar-list" id="similarList">${similar.map(s => `<button type="button" class="similar-item" data-id="${s.id}"><strong>${s.name}</strong> · ${averageRating(s).toFixed(1)} ★ (${totalReviews(s)} reviews)</button>`).join("")}</div>` : ""}
     <h3>Reviews</h3>
     <div class="reviews">
-      ${
-        biz.reviews && biz.reviews.length
-          ? biz.reviews
-              .slice()
-              .reverse()
-              .map(
-                r =>
-                  `<div class="review">
+      ${biz.reviews && biz.reviews.length
+      ? biz.reviews
+        .slice()
+        .reverse()
+        .map(
+          r =>
+            `<div class="review">
                     <div class="rating-row"><span class="stars">${"★".repeat(r.rating)}${"☆".repeat(
-                    5 - r.rating
-                  )}</span> <strong>${r.user_name}</strong></div>
+              5 - r.rating
+            )}</span> <strong>${r.user_name}</strong></div>
                     <p>${r.comment}</p>
                     <div class="helper">${r.date || ""}</div>
                   </div>`
-              )
-              .join("")
-          : `<div class="empty">No reviews yet. Be the first to review!</div>`
-      }
+        )
+        .join("")
+      : `<div class="empty">No reviews yet. Be the first to review!</div>`
+    }
     </div>
     <h3>Add a Review</h3>
     <div class="form" id="reviewForm">
@@ -774,9 +774,8 @@ function openDetails(id) {
 
   const favToggle = content.querySelector("#favToggle");
   const syncFavBtn = () => {
-    favToggle.innerHTML = `<i class="fas fa-heart"></i> ${
-      state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
-    }`;
+    favToggle.innerHTML = `<i class="fas fa-heart"></i> ${state.favorites.has(biz.id) ? "Remove Favorite" : "Add to Favorites"
+      }`;
   };
   favToggle.addEventListener("click", () => {
     if (state.favorites.has(biz.id)) state.favorites.delete(biz.id);
