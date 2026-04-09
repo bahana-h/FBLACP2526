@@ -25,11 +25,11 @@ const state = {
 };
 
 const els = {};
-const OVERPASS_PRIMARY_RADIUS = 1200;
-const OVERPASS_FALLBACK_RADIUS = 700;
-const OVERPASS_TIMEOUT_SEC = 18;
-const OVERPASS_REQUEST_TIMEOUT_MS = 20000;
-const MAX_OSM_RESULTS = 120;
+const OVERPASS_PRIMARY_RADIUS = 900;
+const OVERPASS_FALLBACK_RADIUS = 450;
+const OVERPASS_TIMEOUT_SEC = 12;
+const OVERPASS_REQUEST_TIMEOUT_MS = 12000;
+const MAX_OSM_RESULTS = 60;
 
 function qs(id) {
   return document.getElementById(id);
@@ -167,6 +167,7 @@ function getCurrentLocation() {
 
   showStatus("Getting your location...", "info");
   state.loading = true;
+  render();
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
@@ -179,8 +180,17 @@ function getCurrentLocation() {
       searchBusinesses(location);
     },
     (error) => {
-      showStatus("Could not get your location. Please enter a location manually.", "error");
+      const msg = error && error.code === 1
+        ? "Location permission was denied. Please allow location or enter a location manually."
+        : "Could not get your location. Please enter a location manually.";
+      showStatus(msg, "error");
       state.loading = false;
+      render();
+    },
+    {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 300000
     }
   );
 }
@@ -200,6 +210,7 @@ function searchByLocationText() {
 async function searchBusinesses(location) {
   state.loading = true;
   showStatus("Searching for local businesses...", "info");
+  render();
 
   try {
     let lat, lon;
