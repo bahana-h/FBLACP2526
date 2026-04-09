@@ -1,10 +1,5 @@
-/**
- * Reports page: reads businesses from localStorage (cc-data), computes summary stats,
- * and builds a filterable/sortable table. Supports print and download (HTML blob).
- */
 (function () {
-  /** Read and parse cc-data from localStorage; returns { businesses, favorites } or empty defaults. */
-  function getStored() {
+    function getStored() {
     try {
       var raw = localStorage.getItem("cc-data");
       if (!raw) return { businesses: [], favorites: [] };
@@ -14,21 +9,18 @@
     }
   }
 
-  /** Compute average rating from reviews, or use biz.rating if it is a positive number. */
-  function averageRating(biz) {
+    function averageRating(biz) {
     if (typeof biz.rating === "number" && biz.rating > 0) return biz.rating;
     if (!biz.reviews || !biz.reviews.length) return 0;
     return biz.reviews.reduce(function (s, r) { return s + (r.rating || 0); }, 0) / biz.reviews.length;
   }
 
-  /** Total review count for a business (review_count if present, else reviews.length). */
-  function totalReviews(biz) {
+    function totalReviews(biz) {
     if (biz.review_count !== undefined) return (biz.review_count || 0) + (biz.reviews && biz.reviews.length || 0);
     return (biz.reviews && biz.reviews.length) || 0;
   }
 
-  /** Build the full report: apply category/sort from dropdowns, compute summary stats, fill summary boxes and table. */
-  function buildReport() {
+    function buildReport() {
     var category = (document.getElementById("reportCategory") && document.getElementById("reportCategory").value) || "";
     var sort = (document.getElementById("reportSort") && document.getElementById("reportSort").value) || "name";
     var stored = getStored();
@@ -78,20 +70,17 @@
       "<tbody>" + rows + "</tbody></table>";
   }
 
-  /** Escape text for safe HTML insertion. */
-  function escapeHtml(s) {
+    function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
   }
 
-  /** Open print dialog for #printArea (report summary + table); toolbar/nav hidden via print CSS. */
-  function printReport() {
+    function printReport() {
     window.print();
   }
 
-  /** Build a tab-separated report with current filters and trigger download as .txt file. */
-  function downloadReport() {
+    function downloadReport() {
     var category = document.getElementById("reportCategory") && document.getElementById("reportCategory").value;
     var sort = document.getElementById("reportSort") && document.getElementById("reportSort").value;
     var stored = getStored();
@@ -124,8 +113,7 @@
   }
 
   buildReport();
-  /* Wire filter/sort dropdowns and buttons to rebuild report or trigger print/download. */
-  var refreshBtn = document.getElementById("reportRefresh");
+    var refreshBtn = document.getElementById("reportRefresh");
   if (refreshBtn) refreshBtn.addEventListener("click", buildReport);
   var catSelect = document.getElementById("reportCategory");
   var sortSelect = document.getElementById("reportSort");

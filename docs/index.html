@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- Chrysalis Connect – Main directory page: landing, location search, filters, business list, detail modal, Help modal. -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -31,7 +30,6 @@
     </div>
   </nav>
 
-  <!-- Landing / Brand moment (3D chrysalis → butterfly) -->
   <header class="landing" id="landing">
     <div class="container landing-grid">
       <div class="landing-copy">
@@ -70,7 +68,6 @@
     </div>
   </header>
 
-  <!-- Directory: location search, stats, filters, and business list (filled by app.js). -->
   <header class="hero">
     <div class="container hero-content" id="directory">
       <div>
@@ -114,7 +111,6 @@
   </div>
 
   <main class="container">
-    <!-- Filters and category pills; Apply button and dropdowns drive state.filters in app.js. -->
     <section class="filters-card">
       <div class="filters">
         <div class="filter">
@@ -139,11 +135,9 @@
     </section>
 
     <h2 class="view-title" id="viewTitle" aria-live="polite"></h2>
-    <!-- Business cards are injected here by app.js render() from businessCardTemplate. -->
     <section id="businessList" class="grid"></section>
   </main>
 
-  <!-- Help overlay: "How to Use Chrysalis Connect" (opened by nav Help button). -->
   <div class="modal" id="helpModal" aria-labelledby="helpModalTitle" aria-hidden="true">
     <div class="modal-content help-modal-content">
       <button class="modal-close" id="helpModalClose" aria-label="Close">&times;</button>
@@ -189,14 +183,12 @@
     </div>
   </div>
 
-  <!-- Business detail modal: content is built by app.js openDetails(); close by overlay or ×. -->
   <div class="modal" id="modal">
     <div class="modal-content" id="modalContent">
       <button class="modal-close" id="modalClose">&times;</button>
     </div>
   </div>
 
-  <!-- Template for each business card; cloned and filled by app.js cardForBusiness(). -->
   <template id="businessCardTemplate">
     <article class="card">
       <div class="card-header">
