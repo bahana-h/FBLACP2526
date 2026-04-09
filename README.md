@@ -7,7 +7,7 @@ https://bahana-h.github.io/FBLACP2526/
 
 ## Mascot!!!
 
-![Alt Text](C:\Users\henryw\Downloads\Chrysalis Connect Logo Picture.png)
+![Alt Text](assets/Chrysalis%20Connect%20Logo%20Picture.png)
 
 Our story lies with a red-spotted purple butterfly whose transformation in a chrysalis is similar to businesses in that with the right platform to support it, every business can grow, be discovered, and thrive.
 
