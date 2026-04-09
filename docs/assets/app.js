@@ -143,17 +143,6 @@ async function syncSharedReviewsIntoState() {
   }
 }
 
-function showBackendStatus() {
-  const baseUrl = getBackendBaseUrl();
-  if (!baseUrl) {
-    showStatus("Shared reviews: OFF (set backend URL in Shared Reviews).", "info");
-    return;
-  }
-  showStatus(`Shared reviews: ON (${baseUrl})`, "success");
-}
-
-
-
 function getCurrentLocation() {
   if (!navigator.geolocation) {
     showStatus("Geolocation is not supported by your browser.", "error");
@@ -877,23 +866,6 @@ function bindEvents() {
     });
   }
 
-  const settingsBtn = qs("settingsBtn");
-  if (settingsBtn) {
-    settingsBtn.addEventListener("click", async () => {
-      const current = getBackendBaseUrl();
-      const next = prompt(
-        "Shared Reviews backend URL (example: https://your-backend.onrender.com)\n\nLeave blank to disable shared reviews.",
-        current
-      );
-      if (next === null) return;
-      setBackendBaseUrl(next);
-      showBackendStatus();
-      await syncSharedReviewsIntoState();
-      saveState();
-      render();
-    });
-  }
-
   qs("favoritesBtn").addEventListener("click", showFavorites);
 
   const navHelp = qs("navHelp");
@@ -924,7 +896,6 @@ function bindEvents() {
 function init() {
   els.list = qs("businessList");
   qs("apiKeyBanner").style.display = "none";
-  showBackendStatus();
   loadState();
   buildCategories();
   bindEvents();
