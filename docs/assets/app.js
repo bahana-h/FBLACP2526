@@ -205,7 +205,7 @@ async function searchBusinesses(location) {
     }
 
     const radius = 1500; // keep the live result set smaller and faster
-    const maxBusinesses = 200;
+    const maxBusinesses = 500;
     const categoryTags = getOSMCategoryTags();
 
     const query = `
@@ -238,8 +238,8 @@ async function searchBusinesses(location) {
       state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
       await syncSharedReviewsIntoState();
       buildCategories();
-      render();
       state.loading = false;
+      render();
       return;
     }
 
@@ -277,8 +277,8 @@ async function searchBusinesses(location) {
     await syncSharedReviewsIntoState();
     saveState();
     buildCategories();
-    render();
     state.loading = false;
+    render();
 
   } catch (error) {
     console.error("Error fetching businesses:", error);
@@ -288,8 +288,8 @@ async function searchBusinesses(location) {
     await syncSharedReviewsIntoState();
     saveState();
     buildCategories();
-    render();
     state.loading = false;
+    render();
   }
 }
 
@@ -409,6 +409,7 @@ function loadState() {
       const parsed = JSON.parse(stored);
       state.businesses = parsed.businesses || [];
       state.favorites = new Set(parsed.favorites || []);
+      state.locationSearchComplete = state.businesses.length > 0;
     } catch (e) {
       console.warn("Failed to parse stored data", e);
     }
@@ -507,6 +508,12 @@ function updateActionAvailability() {
     mostReviewedBtn.classList.toggle("is-locked", locked);
     mostReviewedBtn.setAttribute("aria-disabled", locked ? "true" : "false");
   }
+}
+
+function canUseLoadedBusinesses(actionLabel) {
+  if (!state.loading && state.locationSearchComplete) return true;
+  showLocationRequiredPopup(actionLabel);
+  return false;
 }
 
 function filteredBusinesses() {
@@ -882,19 +889,19 @@ function bindEvents() {
   const navRec = qs("navRecommendations");
   if (navRec) navRec.addEventListener("click", showRecommendations);
 
-  function requireLocationSearch(actionLabel) {
-    if (state.locationSearchComplete) return true;
-    showStatus(`First search a location with Explore Nearby or Use My Location before using ${actionLabel}.`, "error");
-    return false;
+  const navMap = qs("navMap");
+  if (navMap) {
+    navMap.addEventListener("click", (event) => {
+      if (!canUseLoadedBusinesses("Map")) {
+        event.preventDefault();
+      }
+    });
   }
 
   const topRatedBtn = qs("topRatedBtn");
   if (topRatedBtn) {
     topRatedBtn.addEventListener("click", () => {
-      if (state.loading || !state.locationSearchComplete) {
-        showLocationRequiredPopup("Top Rated");
-        return;
-      }
+      if (!canUseLoadedBusinesses("Top Rated")) return;
       state.view = "";
       state.filters.sort = "rating";
       render();
@@ -903,10 +910,7 @@ function bindEvents() {
   const mostReviewedBtn = qs("mostReviewedBtn");
   if (mostReviewedBtn) {
     mostReviewedBtn.addEventListener("click", () => {
-      if (state.loading || !state.locationSearchComplete) {
-        showLocationRequiredPopup("Most Reviewed");
-        return;
-      }
+      if (!canUseLoadedBusinesses("Most Reviewed")) return;
       state.view = "";
       state.filters.sort = "reviews";
       render();

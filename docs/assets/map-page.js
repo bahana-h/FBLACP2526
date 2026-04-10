@@ -29,6 +29,14 @@
     return div.innerHTML;
   }
 
+  function hasLoadedBusinesses() {
+    return businesses.length > 0;
+  }
+
+  function showLoadBusinessesPopup(actionLabel) {
+    alert("Please load local businesses on the directory first before using " + actionLabel + ".");
+  }
+
   var container = document.getElementById("businessMap");
   var emptyMsg = document.getElementById("mapEmptyMsg");
   if (!container) return;
@@ -37,6 +45,23 @@
   var withLocation = businesses.filter(function (b) {
     return b.latitude != null && b.longitude != null &&
       Number.isFinite(b.latitude) && Number.isFinite(b.longitude);
+  });
+
+  var guardedLinks = [
+    { id: "mapTopRatedLink", label: "Top Rated" },
+    { id: "mapMostReviewedLink", label: "Most Reviewed" },
+    { id: "mapFavoritesLink", label: "Favorites" }
+  ];
+
+  guardedLinks.forEach(function (item) {
+    var link = document.getElementById(item.id);
+    if (!link) return;
+    link.addEventListener("click", function (event) {
+      if (!hasLoadedBusinesses()) {
+        event.preventDefault();
+        showLoadBusinessesPopup(item.label);
+      }
+    });
   });
 
   if (emptyMsg) emptyMsg.style.display = withLocation.length === 0 ? "block" : "none";
