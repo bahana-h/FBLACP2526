@@ -1,4 +1,18 @@
+// Q&A page logic.
+//
+// What this module does:
+// - Stores a curated local knowledge base for common user questions.
+// - Normalizes free-text input to improve match reliability.
+// - Scores matches using multiple heuristics (exact, phrase, keyword, token overlap).
+// - Returns top results and renders them as safe HTML cards.
+// - Supports both typed search and one-click suggested question prompts.
+//
+// Note: This is intentionally lightweight and deterministic (no external AI call),
+// which keeps it fast and predictable for demos and offline/static hosting.
+
 (function () {
+  // Local Q&A knowledge base. Each item has searchable keywords, a display
+  // question, and HTML-enabled answer content used in result cards.
   var knowledge = [
     {
       keywords: ["add business", "add a business", "new business", "submit business", "create business", "list a business"],
@@ -83,6 +97,7 @@
   ];
 
   function normalize(s) {
+    // Normalize input to improve matching consistency across punctuation/case.
     return (s || "").toLowerCase().trim().replace(/\s+/g, " ");
   }
 
@@ -90,21 +105,30 @@
     var n = normalize(input);
     var q = normalize(item.question);
     var score = 0;
+
+    // High-confidence boost when user query and canonical question are near-exact.
     if (n === q || q.indexOf(n) !== -1 || n.indexOf(q) !== -1) score += 50;
+
     var inputWords = n.split(/\s+/).filter(Boolean);
     var questionWords = q.replace(/[?!.]/g, "").split(/\s+/).filter(Boolean);
     var phraseOverlap = 0;
+
+    // Medium-confidence boost: overlap between user text and question wording.
     for (var i = 0; i < questionWords.length; i++) {
       if (questionWords[i].length < 2) continue;
       if (n.indexOf(questionWords[i]) !== -1) phraseOverlap += 2;
     }
     if (phraseOverlap >= 4) score += 20;
+
+    // Keyword scoring from the curated list attached to each Q&A item.
     var keyStr = item.keywords.join(" ").toLowerCase();
     for (var j = 0; j < item.keywords.length; j++) {
       var kw = item.keywords[j].toLowerCase();
       if (kw.length < 2) continue;
       if (n.indexOf(kw) !== -1) score += kw.indexOf(" ") !== -1 ? 5 : 1;
     }
+
+    // Small residual score for partial token overlap to avoid hard misses.
     for (var k = 0; k < inputWords.length; k++) {
       if (inputWords[k].length < 2) continue;
       if (keyStr.indexOf(inputWords[k]) !== -1) score += 1;
@@ -113,7 +137,10 @@
   }
 
   function getAnswers(input) {
+    // Ignore very short queries to reduce noisy matches.
     if (!input || normalize(input).length < 2) return [];
+
+    // Score all entries, keep positive matches, then return top 3.
     var scored = knowledge.map(function (item) {
       return { item: item, score: scoreMatch(input, item) };
     }).filter(function (x) { return x.score > 0; });
@@ -123,6 +150,7 @@
 
   function renderResults(items) {
     if (!items.length) {
+      // Friendly fallback when no match is strong enough.
       return "<div class=\"qa-result-card qa-no-match\">" +
         "<p>I couldn't find a direct match. Try rephrasing or use one of the suggested questions below. You can also open <strong>Help</strong> on the main page for a full guide.</p>" +
         "</div>";
@@ -136,6 +164,7 @@
   }
 
   function escapeHtml(s) {
+    // Escape question text before injecting into HTML templates.
     var div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
@@ -147,6 +176,7 @@
   var resultsEl = document.getElementById("qaResults");
   var suggestedEl = document.getElementById("qaSuggested");
 
+  // If required DOM anchors are missing, safely stop initialization.
   if (!inputEl || !resultsEl) return;
 
   function showResults(html) {
@@ -167,6 +197,8 @@
       showPlaceholder();
       return;
     }
+
+    // Search pipeline: score -> pick top answers -> render cards.
     var items = getAnswers(q);
     showResults(renderResults(items));
   }
@@ -177,10 +209,13 @@
   });
 
   if (suggestedEl) {
+    // Seed suggested prompts from the first few curated Q&A entries.
     var suggested = knowledge.slice(0, 8);
     suggestedEl.innerHTML = suggested.map(function (item) {
       return "<button type=\"button\" class=\"qa-suggested-btn\">" + escapeHtml(item.question) + "</button>";
     }).join("");
+
+    // Clicking a suggested question copies it into input and runs the same flow.
     suggestedEl.querySelectorAll(".qa-suggested-btn").forEach(function (btn, i) {
       btn.addEventListener("click", function () {
         inputEl.value = suggested[i].question;

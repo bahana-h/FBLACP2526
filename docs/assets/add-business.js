@@ -4,6 +4,7 @@
   var captchaInput = document.getElementById("captchaInput");
   var formError = document.getElementById("formError");
 
+  // Lightweight client-side verification used by the static flow.
   var captchaA = Math.floor(Math.random() * 10) + 1;
   var captchaB = Math.floor(Math.random() * 10) + 1;
   var captchaAnswer = String(captchaA + captchaB);
@@ -60,6 +61,7 @@
         return;
       }
 
+      // Deals are optional; create only when a title is provided.
       var deals = [];
       if (dealTitle) {
         deals.push({ title: dealTitle, description: dealDesc, expires: dealExpires });
@@ -76,6 +78,7 @@
         reviews: []
       };
 
+      // Persist new listing into the same local store used by directory pages.
       var stored = getStored();
       stored.businesses.push(newBiz);
       setStored(stored);

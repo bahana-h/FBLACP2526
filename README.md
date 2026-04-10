@@ -28,6 +28,7 @@ Our story lies with a red-spotted purple butterfly whose transformation in a chr
 - Hosting:
   - Frontend on GitHub Pages
   - Backend on Render
+- Server monitoring: Uptime Robot
 
 ## Project structure
 
@@ -37,6 +38,70 @@ Our story lies with a red-spotted purple butterfly whose transformation in a chr
 - templates/: Flask templates
 - static/: Flask static files
 - requirements.txt: Python dependencies
+
+### File guide (what each major file does)
+
+- app.py
+  - Main Flask server.
+  - Renders template pages and handles form routes.
+  - Exposes API endpoints such as shared review routes.
+
+- backend/models.py
+  - Defines Business objects and the BusinessBoost manager class.
+  - Holds in-memory business/review/favorite logic for the Flask app.
+
+- backend/validators.py
+  - Validation helpers for user input (business fields, review data, verification).
+
+- backend/recommendations.py
+  - Ranking and recommendation helpers (personalized/trending/similar logic).
+
+- backend/reviews_store.py
+  - Shared review persistence layer.
+  - Uses Supabase if configured, otherwise falls back to local JSON storage.
+
+- docs/index.html
+  - Main static frontend page served by GitHub Pages.
+
+- docs/assets/app.js
+  - Core frontend app logic.
+  - Performs location search, OpenStreetMap calls, filtering/sorting, rendering, and local storage sync.
+
+- docs/assets/qa.js
+  - Q&A feature logic using a keyword-scoring matcher over a local knowledge base.
+
+- docs/assets/map-page.js
+  - Map page behavior and business marker rendering.
+
+- templates/
+  - Flask/Jinja templates for server-rendered backend pages.
+
+- static/
+  - CSS/JS assets used by Flask-rendered templates.
+
+## Architecture notes
+
+This repo contains two UI paths:
+
+1. Static frontend path (GitHub Pages)
+   - Uses files in docs/ and docs/assets/.
+   - Makes OpenStreetMap API calls from the browser.
+   - Stores loaded business state in browser storage.
+
+2. Flask-rendered path (Python backend)
+   - Uses app.py + templates/ + static/.
+   - Handles server-side rendering and form-driven flows.
+
+Because both paths exist, some features are shared in concept but implemented
+slightly differently between static and Flask pages.
+
+## Data flow summary
+
+1. User enters a location on the static frontend.
+2. Frontend geocodes with Nominatim, then fetches nearby places via Overpass.
+3. Businesses are normalized into the frontend state.businesses array.
+4. Optional: reviews can be synced through backend shared-review endpoints.
+5. UI renders cards, details, map markers, and reports from current state.
 
 ## Run locally
 

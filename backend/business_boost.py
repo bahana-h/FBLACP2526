@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""Legacy/local business manager used by the Flask routes.
+
+This module provides an in-memory+JSON-file workflow for businesses, reviews,
+and favorites, including simple human verification for write operations.
+"""
+
 import json
 import os
 import random
@@ -89,6 +95,7 @@ class BusinessBoost:
             try:
                 with open(self.data_file, 'r') as f:
                     data = json.load(f)
+                    # Rehydrate stored dictionaries back into Business objects.
                     self.businesses = [Business.from_dict(b) for b in data.get("businesses", [])]
                     self.user_favorites = data.get("user_favorites", {})
             except Exception as e:
@@ -107,6 +114,7 @@ class BusinessBoost:
             json.dump(data, f, indent=2)
     
     def _initialize_sample_data(self):
+        # Seed first-run local data so directory pages are not empty.
         sample_businesses = [
             Business(
                 name="Joe's Coffee House",
@@ -153,6 +161,7 @@ class BusinessBoost:
         self.save_data()
     
     def verify_user(self) -> bool:
+        # Lightweight anti-bot check for CLI-driven write operations.
         num1 = random.randint(1, 10)
         num2 = random.randint(1, 10)
         answer = num1 + num2
@@ -237,6 +246,7 @@ class BusinessBoost:
             return []
         
         favorite_ids = self.user_favorites[username]
+        # Preserve business object interface for callers (templates/recommendations).
         return [b for b in self.businesses if b.id in favorite_ids]
     
     def display_business(self, business: Business, show_deals: bool = True):

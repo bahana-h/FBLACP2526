@@ -1,3 +1,9 @@
+"""Shared review persistence helpers.
+
+Provides a Supabase-backed store when credentials are configured, with a JSON
+file fallback for local development and demos.
+"""
+
 import os
 import json
 from datetime import datetime

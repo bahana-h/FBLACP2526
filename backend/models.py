@@ -1,3 +1,9 @@
+"""Core business domain models.
+
+Defines the in-memory Business entity and the BusinessBoost manager used by the
+Flask app for listing, searching, sorting, favorites, and review aggregation.
+"""
+
 import json
 import os
 import random

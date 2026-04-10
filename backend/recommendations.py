@@ -1,4 +1,10 @@
 
+"""Recommendation and ranking helpers.
+
+These functions compute personalized, trending, and related business results
+based on categories, ratings, review activity, and favorites.
+"""
+
 from typing import List, Dict, Set
 from .models import Business, BusinessBoost
 
@@ -9,6 +15,7 @@ def get_personalized_recommendations(username: str, business_boost: BusinessBoos
     if not user_favorites:
         return get_trending_businesses(business_boost, limit)
     
+    # Build simple category affinity from favorites.
     category_preferences: Dict[str, int] = {}
     for fav in user_favorites:
         category = fav.category
@@ -28,15 +35,18 @@ def get_personalized_recommendations(username: str, business_boost: BusinessBoos
         
         score = 0.0
         
+        # Weight category match highest for personalization.
         if preferred_category and business.category == preferred_category:
             score += 10.0
         
         avg_rating = business.get_average_rating()
+        # Ratings and review count provide quality + confidence signals.
         score += avg_rating * 2.0
         
         review_count = business.get_review_count()
         score += min(review_count * 0.5, 5.0)  # Cap at 5 points
         
+        # Small boost for currently promotable businesses.
         if business.deals:
             score += 1.0
         
@@ -61,6 +71,7 @@ def get_trending_businesses(business_boost: BusinessBoost, limit: int = 10) -> L
         avg_rating = business.get_average_rating()
         score += avg_rating * 3.0
         
+        # Trend signal = recent activity in the last 30 days.
         recent_reviews = 0
         for review in business.reviews:
             try:

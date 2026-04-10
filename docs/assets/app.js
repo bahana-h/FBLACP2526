@@ -1,4 +1,12 @@
 
+// Main frontend application logic.
+//
+// Responsibilities:
+// - Stores runtime UI state (business list, filters, favorites, current view)
+// - Fetches businesses from OpenStreetMap (Overpass + Nominatim)
+// - Renders cards/details/map-linked content
+// - Syncs optional shared reviews through backend endpoints
+
 const sampleBusinesses = [
   {
     id: "joescoffee",
@@ -93,6 +101,7 @@ async function fetchSharedReviewsForBusinesses(businessIds) {
   const resp = await fetch(`${baseUrl}/api/shared-reviews/bulk`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    // Send only currently loaded business ids to keep payload small.
     body: JSON.stringify({ business_ids: businessIds })
   });
   if (!resp.ok) return null;
@@ -132,6 +141,7 @@ async function syncSharedReviewsIntoState() {
     if (!Array.isArray(shared) || shared.length === 0) continue;
 
     biz.reviews = Array.isArray(biz.reviews) ? biz.reviews : [];
+    // De-dupe by stable text key so repeated syncs do not duplicate reviews.
     const seen = new Set(biz.reviews.map(r => `${r.user_name}|${r.rating}|${r.comment}`));
 
     for (const r of shared) {
@@ -208,6 +218,7 @@ async function searchBusinesses(location) {
     const maxBusinesses = 500;
     const categoryTags = getOSMCategoryTags();
 
+    // Overpass query pulls both nodes and ways around the chosen coordinates.
     const query = `
       [out:json][timeout:25];
       (
@@ -243,6 +254,7 @@ async function searchBusinesses(location) {
       return;
     }
 
+    // Normalize OSM elements into the app's business shape.
     const nextBusinesses = data.elements
       .filter(element => element.tags && element.tags.name) // Only include named places
       .slice(0, maxBusinesses)

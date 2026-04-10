@@ -1,4 +1,10 @@
 
+"""Input validation helpers for business, review, and verification forms.
+
+Each function returns a success flag and a user-facing error message (or parsed
+value) so route handlers can respond consistently.
+"""
+
 import re
 from typing import Tuple, Optional
 from datetime import datetime
@@ -53,6 +59,7 @@ def validate_address(address: str) -> Tuple[bool, Optional[str]]:
     if len(address_trimmed) > 500:
         return False, "Address is too long (maximum 500 characters)."
     
+    # Require at least a plausible street indicator to reduce junk entries.
     has_street_number = bool(re.search(r'\d+', address_trimmed))
     has_street_name = bool(re.search(r'\b(street|st|avenue|ave|road|rd|boulevard|blvd|drive|dr|lane|ln|way|circle|cir)\b', address_trimmed, re.IGNORECASE))
     
@@ -71,6 +78,7 @@ def validate_phone(phone: str) -> Tuple[bool, Optional[str]]:
     
     phone_trimmed = phone.strip()
     
+    # Normalize before validating length and display format.
     digits_only = re.sub(r'[^\d]', '', phone_trimmed)
     
     if len(digits_only) < 10:
@@ -113,6 +121,7 @@ def validate_comment(comment: str, min_length: int = 3, max_length: int = 1000) 
     if len(comment_trimmed) > max_length:
         return False, f"Comment is too long (maximum {max_length} characters)."
     
+    # Reject low-entropy comments like "aaa" or "111".
     if len(set(comment_trimmed)) < 3:
         return False, "Comment must contain meaningful content."
     
@@ -165,6 +174,7 @@ def validate_date(date_string: str, allow_past: bool = False) -> Tuple[bool, Opt
     if not isinstance(date_string, str):
         return False, "Date must be a string."
     
+    # Enforce ISO-like date format expected by UI date inputs.
     date_pattern = r'^\d{4}-\d{2}-\d{2}$'
     if not re.match(date_pattern, date_string):
         return False, "Date must be in format YYYY-MM-DD."

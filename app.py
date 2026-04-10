@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Flask backend for Chrysalis Connect.
+
+This module serves template pages, handles form submissions for adding businesses
+and reviews, and exposes JSON endpoints used by the frontend (for example shared
+review sync and optional third-party API proxying).
+"""
 
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 import json
@@ -492,6 +498,7 @@ def shared_reviews_bulk():
     if request.method == "OPTIONS":
         return _corsify(jsonify({"ok": True}))
 
+    # Client requests shared reviews only for businesses currently in view.
     payload = request.get_json(silent=True) or {}
     business_ids = payload.get("business_ids", [])
     if not isinstance(business_ids, list) or not all(isinstance(x, str) for x in business_ids):
@@ -507,6 +514,7 @@ def shared_reviews_add():
     if request.method == "OPTIONS":
         return _corsify(jsonify({"ok": True}))
 
+    # Accepts one validated review and appends it to per-business review history.
     payload = request.get_json(silent=True) or {}
     business_id = payload.get("business_id")
     user_name = (payload.get("user_name") or "").strip()

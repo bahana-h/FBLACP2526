@@ -1,4 +1,5 @@
 (function () {
+  // Read persisted frontend state; map page is a separate document.
   function getBusinesses() {
     try {
       const raw = localStorage.getItem("cc-data");
@@ -42,6 +43,7 @@
   if (!container) return;
 
   var businesses = getBusinesses();
+  // Map only businesses with valid numeric coordinates.
   var withLocation = businesses.filter(function (b) {
     return b.latitude != null && b.longitude != null &&
       Number.isFinite(b.latitude) && Number.isFinite(b.longitude);
@@ -55,6 +57,7 @@
     var link = document.getElementById(item.id);
     if (!link) return;
     link.addEventListener("click", function (event) {
+      // Prevent cross-page actions that depend on directory data before load.
       if (!hasLoadedBusinesses()) {
         event.preventDefault();
         showLoadBusinessesPopup(item.label);
@@ -74,6 +77,7 @@
   var zoom = withLocation.length === 1 ? 14 : 12;
 
   var map = L.map("businessMap").setView(defaultCenter, zoom);
+  // OSM tile layer for base map rendering.
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
   }).addTo(map);

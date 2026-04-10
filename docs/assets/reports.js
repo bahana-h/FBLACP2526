@@ -1,4 +1,5 @@
 (function () {
+  // Pull persisted app state from localStorage for reporting.
   function getStored() {
     try {
       var raw = localStorage.getItem("cc-data");
@@ -24,6 +25,7 @@
     var category = (document.getElementById("reportCategory") && document.getElementById("reportCategory").value) || "";
     var sort = (document.getElementById("reportSort") && document.getElementById("reportSort").value) || "name";
     var stored = getStored();
+    // Work on a copy so sorting/filtering does not mutate persisted data.
     var list = (stored.businesses || []).slice();
 
     if (category) list = list.filter(function (b) { return b.category === category; });
@@ -41,6 +43,7 @@
       byCat[c] = (byCat[c] || 0) + 1;
     });
 
+    // Compute aggregate metrics for the summary cards.
     var summaryEl = document.getElementById("reportSummary");
     if (summaryEl) {
       summaryEl.innerHTML =
@@ -59,6 +62,7 @@
       return;
     }
 
+    // Render the current view into a simple HTML table.
     var rows = list.map(function (b) {
       var r = averageRating(b);
       var tr = totalReviews(b);
@@ -90,6 +94,7 @@
     else if (sort === "reviews") list.sort(function (a, b) { return totalReviews(b) - totalReviews(a); });
     else list.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
 
+    // Export plain-text tab-separated output for easy sharing/import.
     var lines = [
       "Chrysalis Connect - Directory Report",
       "Generated: " + new Date().toLocaleString(),
