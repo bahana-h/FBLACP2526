@@ -30,7 +30,6 @@ FOURSQUARE_API_KEY = os.getenv("FOURSQUARE_API_KEY")
 
 SHARED_REVIEWS_FILE = os.getenv("SHARED_REVIEWS_FILE", "shared_reviews.json")
 
-
 def _corsify(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
