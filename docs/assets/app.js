@@ -906,15 +906,6 @@ function init() {
     render();
   });
 
-  const landingBtn = qs("landingScrollBtn");
-  if (landingBtn) {
-    landingBtn.addEventListener("click", () => {
-      const el = document.getElementById("directory");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setTimeout(() => getCurrentLocation(), 350);
-    });
-  }
-
   const hash = window.location.hash;
   const detailMatch = hash && hash.match(/^#detail=(.+)$/);
   if (detailMatch) {

@@ -36,9 +36,9 @@
   --radius: 12px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 
-  --font-display: "Lazy Dog", "Lazy Dog Fallback", "Lazydog", "lazy_dog", "Architects Daughter";
-  --font-body: "Architects Daughter", serif;
-  --font-small: "The Smile", sans-serif;
+  --font-display: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-small: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -48,6 +48,7 @@
 body {
   margin: 0;
   font-family: var(--font-body);
+  line-height: 1.6;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -207,6 +208,54 @@ body {
   grid-template-columns: 1fr 18px 1fr;
   align-items: center;
   gap: 6px;
+}
+
+.butterfly3d::before,
+.butterfly3d::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  width: 46px;
+  height: 3px;
+  background: linear-gradient(90deg, #111827, #374151);
+  border-radius: 999px;
+  z-index: 3;
+}
+
+.butterfly3d::before {
+  left: 100px;
+  transform: rotate(28deg);
+  transform-origin: right center;
+}
+
+.butterfly3d::after {
+  left: 118px;
+  transform: rotate(-28deg);
+  transform-origin: left center;
+}
+
+.butterfly3d .body::before,
+.butterfly3d .body::after {
+  content: "";
+  position: absolute;
+  top: -18px;
+  width: 11px;
+  height: 11px;
+  border-top: 2px solid #111827;
+  border-right: 2px solid transparent;
+  border-left: 2px solid transparent;
+  border-bottom: 0;
+  border-radius: 50%;
+}
+
+.butterfly3d .body::before {
+  left: -13px;
+  transform: rotate(18deg);
+}
+
+.butterfly3d .body::after {
+  right: -13px;
+  transform: rotate(-18deg);
 }
 
 .butterfly3d .body {
