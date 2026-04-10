@@ -48,8 +48,6 @@
   });
 
   var guardedLinks = [
-    { id: "mapTopRatedLink", label: "Top Rated" },
-    { id: "mapMostReviewedLink", label: "Most Reviewed" },
     { id: "mapFavoritesLink", label: "Favorites" }
   ];
 

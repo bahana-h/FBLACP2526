@@ -493,21 +493,7 @@ function updateFiltersUI() {
 }
 
 function updateActionAvailability() {
-  const locked = state.loading || !state.locationSearchComplete;
-  const topRatedBtn = qs("topRatedBtn");
-  const mostReviewedBtn = qs("mostReviewedBtn");
-
-  if (topRatedBtn) {
-    topRatedBtn.disabled = false;
-    topRatedBtn.classList.toggle("is-locked", locked);
-    topRatedBtn.setAttribute("aria-disabled", locked ? "true" : "false");
-  }
-
-  if (mostReviewedBtn) {
-    mostReviewedBtn.disabled = false;
-    mostReviewedBtn.classList.toggle("is-locked", locked);
-    mostReviewedBtn.setAttribute("aria-disabled", locked ? "true" : "false");
-  }
+  // Placeholder for future action availability updates
 }
 
 function canUseLoadedBusinesses(actionLabel) {
@@ -898,24 +884,7 @@ function bindEvents() {
     });
   }
 
-  const topRatedBtn = qs("topRatedBtn");
-  if (topRatedBtn) {
-    topRatedBtn.addEventListener("click", () => {
-      if (!canUseLoadedBusinesses("Top Rated")) return;
-      state.view = "";
-      state.filters.sort = "rating";
-      render();
-    });
-  }
-  const mostReviewedBtn = qs("mostReviewedBtn");
-  if (mostReviewedBtn) {
-    mostReviewedBtn.addEventListener("click", () => {
-      if (!canUseLoadedBusinesses("Most Reviewed")) return;
-      state.view = "";
-      state.filters.sort = "reviews";
-      render();
-    });
-  }
+
 
   qs("favoritesBtn").addEventListener("click", showFavorites);
 
