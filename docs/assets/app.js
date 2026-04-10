@@ -204,7 +204,7 @@ async function searchBusinesses(location) {
       lon = location.longitude;
     }
 
-    const radius = 1500; // keep the live result set smaller and faster
+    const radius = 1250; // keep the live result set smaller and faster
     const maxBusinesses = 500;
     const categoryTags = getOSMCategoryTags();
 
