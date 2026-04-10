@@ -43,7 +43,7 @@
     {
       keywords: ["search businesses", "find business", "location search", "city address zip", "use my location", "openstreetmap"],
       question: "How do I search for businesses?",
-      answer: "Enter a city, address, or zip code in the location box and click <strong>Search</strong> or <strong>Use My Location</strong>. Results come from OpenStreetMap and are free. You can also use the text search box to filter by name, category, or address after loading businesses."
+      answer: "<strong>First, enter a location.</strong> Type a city, address, or zip code in the location box and click <strong>Search</strong> or <strong>Use My Location</strong>. Results come from OpenStreetMap and are free. You can also use the text search box to filter by name, category, or address after loading businesses."
     },
     {
       keywords: ["reports", "statistics", "analyze data", "report summary", "print report", "download report"],
@@ -53,7 +53,7 @@
     {
       keywords: ["help", "how to use", "guide", "get help"],
       question: "Where can I get more help?",
-      answer: "On the main page, click <strong>Help</strong> in the nav to open the “How to Use Chrysalis Connect” guide. You can also ask questions here in Q&A for quick answers."
+      answer: "On the main page, click <strong>Help</strong> in the nav to open the “How to Use Chrysalis Connect” guide. The guide starts with the location search step, because that is the first thing to do before browsing anything else. You can also ask questions here in Q&A for quick answers."
     },
     {
       keywords: ["what is chrysalis", "chrysalis connect", "what is this app"],

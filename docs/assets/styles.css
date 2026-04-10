@@ -210,55 +210,30 @@ body {
   gap: 6px;
 }
 
-.butterfly3d::before,
-.butterfly3d::after {
-  content: "";
-  position: absolute;
-  top: 18px;
-  width: 46px;
-  height: 3px;
-  background: linear-gradient(90deg, #111827, #374151);
-  border-radius: 999px;
-  z-index: 3;
-}
-
-.butterfly3d::before {
-  left: 100px;
-  transform: rotate(28deg);
-  transform-origin: right center;
-}
-
-.butterfly3d::after {
-  left: 118px;
-  transform: rotate(-28deg);
-  transform-origin: left center;
-}
-
 .butterfly3d .body::before,
 .butterfly3d .body::after {
   content: "";
   position: absolute;
-  top: -18px;
-  width: 11px;
-  height: 11px;
-  border-top: 2px solid #111827;
-  border-right: 2px solid transparent;
-  border-left: 2px solid transparent;
-  border-bottom: 0;
-  border-radius: 50%;
+  top: -28px;
+  width: 3px;
+  height: 30px;
+  background: linear-gradient(180deg, #111827, #374151);
+  border-radius: 999px;
+  transform-origin: bottom center;
 }
 
 .butterfly3d .body::before {
-  left: -13px;
-  transform: rotate(18deg);
+  left: 3px;
+  transform: rotate(-24deg);
 }
 
 .butterfly3d .body::after {
-  right: -13px;
-  transform: rotate(-18deg);
+  right: 3px;
+  transform: rotate(24deg);
 }
 
 .butterfly3d .body {
+  position: relative;
   width: 18px;
   height: 86px;
   border-radius: 14px;
@@ -491,6 +466,13 @@ body {
   box-shadow: var(--shadow);
 }
 
+.location-help {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
 .location-input-group {
   display: flex;
   gap: 10px;
@@ -612,6 +594,13 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
   align-items: end;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  grid-column: 1 / -1;
 }
 
 .filter label {

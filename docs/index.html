@@ -34,7 +34,7 @@
         <p class="landing-kicker"><i class="fas fa-sparkles"></i> Every business deserves to fly!</p>
         <h1 class="landing-title">Chrysalis Connect</h1>
         <p class="landing-sub">
-          Discover local businesses, leave reviews, and favorite businesses!
+          Start by searching a location, then discover local businesses, leave reviews, and favorite businesses!
         </p>
         <div class="landing-actions">
           <a class="btn primary" href="#directory"><i class="fas fa-compass"></i> Explore Nearby</a>
@@ -74,16 +74,14 @@
         <h1>Discover local businesses near you.</h1>
         <p class="sub">Browse by category, see ratings, save favorites, and find deals!</p>
         <div class="location-selector" id="locationSelector">
+          <p class="location-help">Step 1: enter a city, address, or zip code, or use your location. The rest of the
+            site works after that.</p>
           <div class="location-input-group">
             <input type="text" id="locationInput" placeholder="Enter city, address, or zip code" />
             <button class="btn ghost" id="searchLocation"><i class="fas fa-search"></i> Search</button>
             <button class="btn ghost" id="useCurrentLocation"><i class="fas fa-crosshairs"></i> Use My Location</button>
           </div>
           <div class="location-status" id="locationStatus"></div>
-        </div>
-        <div class="hero-actions">
-          <button class="btn primary" id="topRatedBtn"><i class="fas fa-star"></i> Top Rated</button>
-          <button class="btn secondary" id="mostReviewedBtn"><i class="fas fa-comments"></i> Most Reviewed</button>
         </div>
       </div>
       <div class="hero-panel">
@@ -131,6 +129,10 @@
           </select>
         </div>
         <button class="btn primary" id="applyFilters"><i class="fas fa-filter"></i> Apply</button>
+        <div class="filter-actions">
+          <button class="btn primary" id="topRatedBtn"><i class="fas fa-star"></i> Top Rated</button>
+          <button class="btn secondary" id="mostReviewedBtn"><i class="fas fa-comments"></i> Most Reviewed</button>
+        </div>
       </div>
       <div class="category-pills" id="categoryPills"></div>
     </section>
@@ -146,9 +148,10 @@
       <div class="help-sections">
         <section>
           <h3><i class="fas fa-compass"></i> Explore Businesses</h3>
-          <p>Click <strong>Explore</strong> or enter a location to browse local businesses. Use the search bar, category
-            filter, and sort options to find what you need. Click any business card to see full details, reviews, and
-            deals.</p>
+          <p><strong>First, enter a location.</strong> Click <strong>Explore</strong> or type a city, address, or zip
+            code
+            to load local businesses. After that, use the search bar, category filter, and sort options to find what you
+            need. Click any business card to see full details, reviews, and deals.</p>
         </section>
         <section>
           <h3><i class="fas fa-gear"></i> Shared Reviews</h3>
