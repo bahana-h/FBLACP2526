@@ -137,4 +137,10 @@ Then set env vars in Render (SUPABASE_URL and SUPABASE_KEY).
 - The GitHub Pages frontend and Render backend can look different. That is expected.
 - The frontend can still call the Render API for shared reviews.
 
+## Credits
+
+Made with love for local businesses.
+
+Made by Henry Wang and Hanyu Zhang from Lynbrook High School.
+
 
