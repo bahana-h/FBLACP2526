@@ -20,6 +20,7 @@ const state = {
   favorites: new Set(),
   filters: { search: "", category: "", sort: "name" },
   currentLocation: null,
+  locationSearchComplete: false,
   loading: false,
   view: "" // "", "favorites", "recommendations"
 };
@@ -203,7 +204,8 @@ async function searchBusinesses(location) {
       lon = location.longitude;
     }
 
-    const radius = 2000; // 2km in meters
+    const radius = 1500; // keep the live result set smaller and faster
+    const maxBusinesses = 200;
     const categoryTags = getOSMCategoryTags();
 
     const query = `
@@ -243,6 +245,7 @@ async function searchBusinesses(location) {
 
     const nextBusinesses = data.elements
       .filter(element => element.tags && element.tags.name) // Only include named places
+      .slice(0, maxBusinesses)
       .map(element => {
         const center = element.center || { lat: element.lat, lon: element.lon };
         return {
@@ -264,7 +267,13 @@ async function searchBusinesses(location) {
       });
 
     state.businesses = mergeLocalReviewsInto(nextBusinesses);
-    showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
+    state.locationSearchComplete = true;
+    const totalFound = data.elements.filter(element => element.tags && element.tags.name).length;
+    if (totalFound > maxBusinesses) {
+      showStatus(`Loaded the first ${maxBusinesses} businesses from OpenStreetMap to keep things fast.`, "success");
+    } else {
+      showStatus(`Found ${state.businesses.length} businesses from OpenStreetMap!`, "success");
+    }
     await syncSharedReviewsIntoState();
     saveState();
     buildCategories();
@@ -275,6 +284,7 @@ async function searchBusinesses(location) {
     console.error("Error fetching businesses:", error);
     showStatus(`Error: ${error.message}. Using sample data.`, "error");
     state.businesses = mergeLocalReviewsInto(sampleBusinesses.map(b => ({ ...b })));
+    state.locationSearchComplete = false;
     await syncSharedReviewsIntoState();
     saveState();
     buildCategories();
@@ -481,6 +491,24 @@ function updateFiltersUI() {
   });
 }
 
+function updateActionAvailability() {
+  const locked = state.loading || !state.locationSearchComplete;
+  const topRatedBtn = qs("topRatedBtn");
+  const mostReviewedBtn = qs("mostReviewedBtn");
+
+  if (topRatedBtn) {
+    topRatedBtn.disabled = false;
+    topRatedBtn.classList.toggle("is-locked", locked);
+    topRatedBtn.setAttribute("aria-disabled", locked ? "true" : "false");
+  }
+
+  if (mostReviewedBtn) {
+    mostReviewedBtn.disabled = false;
+    mostReviewedBtn.classList.toggle("is-locked", locked);
+    mostReviewedBtn.setAttribute("aria-disabled", locked ? "true" : "false");
+  }
+}
+
 function filteredBusinesses() {
   let list = [...state.businesses];
   const { search, category, sort } = state.filters;
@@ -526,6 +554,7 @@ function setViewTitle(text) {
 function render() {
   renderStats();
   updateFiltersUI();
+  updateActionAvailability();
   const list = qs("businessList");
   list.innerHTML = "";
 
@@ -783,6 +812,10 @@ function showRecommendations() {
   render();
 }
 
+function showLocationRequiredPopup(actionLabel) {
+  alert(`Please search a location first with Explore Nearby or Use My Location before using ${actionLabel}.`);
+}
+
 function scrollToDirectory() {
   const el = document.getElementById("directory");
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -849,9 +882,19 @@ function bindEvents() {
   const navRec = qs("navRecommendations");
   if (navRec) navRec.addEventListener("click", showRecommendations);
 
+  function requireLocationSearch(actionLabel) {
+    if (state.locationSearchComplete) return true;
+    showStatus(`First search a location with Explore Nearby or Use My Location before using ${actionLabel}.`, "error");
+    return false;
+  }
+
   const topRatedBtn = qs("topRatedBtn");
   if (topRatedBtn) {
     topRatedBtn.addEventListener("click", () => {
+      if (state.loading || !state.locationSearchComplete) {
+        showLocationRequiredPopup("Top Rated");
+        return;
+      }
       state.view = "";
       state.filters.sort = "rating";
       render();
@@ -860,6 +903,10 @@ function bindEvents() {
   const mostReviewedBtn = qs("mostReviewedBtn");
   if (mostReviewedBtn) {
     mostReviewedBtn.addEventListener("click", () => {
+      if (state.loading || !state.locationSearchComplete) {
+        showLocationRequiredPopup("Most Reviewed");
+        return;
+      }
       state.view = "";
       state.filters.sort = "reviews";
       render();

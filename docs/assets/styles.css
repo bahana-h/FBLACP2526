@@ -815,6 +815,20 @@ select:focus {
   box-shadow: var(--shadow);
 }
 
+.btn:disabled,
+.btn.is-locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn:disabled:hover,
+.btn.is-locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .icon-btn {
   background: #e2e8f0;
   border: none;
